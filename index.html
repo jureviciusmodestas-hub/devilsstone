@@ -4194,6 +4194,7 @@ async function xferImport(code){const msg=$i('xfMsg');const bad=t=>{msg.classNam
   if(same>=0){const cur=SLOTS_DATA[same];askConfirm(tr('Pakeisti veikėją?','Replace character?'),tr(`Šiame įrenginyje jau yra <b>${String(cur.name).replace(/[<>&]/g,'')}</b> (lygis ${cur.lvl|0}). Pakeisti jį perkeliamu (lygis ${d.lvl|0})?`,`This device already has <b>${String(cur.name).replace(/[<>&]/g,'')}</b> (level ${cur.lvl|0}). Replace it with the transferred one (level ${d.lvl|0})?`),tr('Pakeisti','Replace'),()=>go(same));return;}
   const free=SLOTS_DATA.indexOf(null);if(free<0)return bad(tr('Visos veikėjų vietos užimtos. Ištrinkite vieną veikėją ir bandykite dar kartą.','All character slots are full. Delete one and try again.'));go(free);}
 /* ---- programėlė (PWA) ---- */
+if(!window.IS_PWA&&!window.PWA_URL)window.PWA_URL='https://jureviciusmodestas-hub.github.io/devilsstone/';
 let _bip=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_bip=e;pwaBtn();});window.addEventListener('appinstalled',()=>{_bip=null;pwaBtn();});
 function pwaBtn(){const b=$i('mInstall');if(!b)return;let show=false;if(window.IS_PWA)show=!STANDALONE&&(!!_bip||IOS||TOUCH);else show=!!window.PWA_URL;b.classList.toggle('hidden',!show);
   b.querySelector('b').textContent=window.IS_PWA?tr('Įdiegti telefone','Install on phone'):tr('Programėlė telefonui','App for your phone');b.querySelector('small').textContent=window.IS_PWA?tr('ikona pradžios ekrane','icon on your home screen'):tr('žaisk be naršyklės','play without the browser');}
