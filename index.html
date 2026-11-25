@@ -202,6 +202,7 @@ body.touch #panelInv .cell{touch-action:none}
 .hint{font-size:11px;color:#8f7a55;margin-top:6px;line-height:1.35}
 #tooltip{position:fixed;z-index:40;pointer-events:none;background:rgba(8,6,5,.97);border:1px solid var(--gold);border-radius:6px;padding:8px 10px;font-size:13px;max-width:260px;line-height:1.35}
 body.touch #log{transform:none;font-size:13px}body.touch #log>div{display:table;margin:2px auto 0;background:rgba(10,6,4,.62);border-radius:6px;padding:1px 8px}
+#qtrack .qsep{margin:5px 0 2px;padding-top:3px;border-top:1px solid rgba(201,164,92,.35);color:#c9a45c;font-size:11px;letter-spacing:.5px;text-transform:uppercase}
 #log{position:fixed;left:50%;transform:translateX(-50%);bottom:122px;width:min(620px,60vw);text-align:center;pointer-events:none;z-index:4;font-size:13.5px;line-height:1.35;text-shadow:0 1px 2px #000,0 0 4px #000}
 #log div{transition:opacity 1s}
 #chatMsgs:empty::before{content:attr(data-ph);color:#8f7a55;opacity:.7}
@@ -563,11 +564,11 @@ function setLang(l){LANG=l;try{localStorage.setItem('sz_lang',l);}catch(e){}appl
 
 /* ================= DROBĖ ================= */
 const cv=$i('game');let ctx=cv.getContext('2d');
-let W=0,H=0,DPR=1,vignette=null;
+let W=0,H=0,DPR=1,vignette=null,TLOW=0;
 let GFX_HI=(()=>{try{return localStorage.getItem('sz_gfx')!=='0';}catch(e){return true;}})();let GFX_MID=(()=>{try{return localStorage.getItem('sz_gfx')==='2';}catch(e){return false;}})();
 var LSC=2;
 let VZ=1;
-function resize(){DPR=Math.min(window.devicePixelRatio||1,TOUCH?1.25:GFX_MID?1:GFX_HI?1.5:1);LSC=GFX_MID?3:2;VZ=TOUCH?.78:1;W=innerWidth/VZ;H=innerHeight/VZ;if(typeof lightCv!=='undefined'){lightCv.width=Math.ceil(W/LSC);lightCv.height=Math.ceil(H/LSC);}cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';
+function resize(){DPR=Math.min(window.devicePixelRatio||1,TOUCH?(GFX_HI&&!GFX_MID&&!TLOW?2:1.25):GFX_MID?1:GFX_HI?1.5:1);LSC=GFX_MID?3:2;VZ=TOUCH?.78:1;W=innerWidth/VZ;H=innerHeight/VZ;if(typeof lightCv!=='undefined'){lightCv.width=Math.ceil(W/LSC);lightCv.height=Math.ceil(H/LSC);}cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';
   const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');vignette=g;}
 const lightCv=document.createElement('canvas'),lctx=lightCv.getContext('2d');
 const LSPR=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.45,'rgba(0,0,0,.65)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return c;})();
@@ -4028,7 +4029,7 @@ function questKill(m){if(!P.quest)return;const q=QMAP[P.quest.id];if(q&&q.multi)
 function refreshQuest(){const el=$i('qtrack');if(!P){el.classList.add('hidden');return;}let h='';
   if(P.quest){const q=QMAP[P.quest.id];h+=`<div class="qt">📜 ${tx(q.title)}</div><div>${questDone()?'<span style="color:#9cff9c">✔ '+tr('Grįžkite pas seniūną','Return to the elder')+'</span>':q.multi?qProg(q):(q.obj?`${tx(q.obj)}: <b>${P.quest.n}/${q.count}</b>`:`${tr('Nužudyta','Slain')} ${tx(TNAME[q.target])}: <b>${P.quest.n}/${q.count}</b>`)}</div>`;}
   if(P.gq){const q=GQMAP[P.gq.id];h+=`<div class="qt" style="margin-top:3px">👥 ${tx(q.title)}</div><div>${gDone()?'<span style="color:#9cff9c">✔ '+tr('Grįžkite pas kapitoną','Return to the captain')+'</span>':`${tx(q.obj)}: <b>${P.gq.n}/${q.count}</b>`}</div>`;}
-  h+=sideTrackHTML();h+=helpTrackHTML();h+=featTrackHTML();
+  {const sd=sideTrackHTML()+helpTrackHTML();if(sd)h+=(h?`<div class="qsep">${tr('Šalutinės užduotys','Side quests')}</div>`:'')+sd;}h+=featTrackHTML();
   h+=`<div style="margin-top:3px">✨ ${LETTERS.map((L,i)=>`<span class="lt ${P.letters[i]?'on':''}">${P.letters[i]?L:'_'}</span>`).join('')}</div>`;
   el.innerHTML=h;el.classList.remove('hidden');}
 const bigBtn='class="big" style="margin-top:10px;font-size:15px;padding:8px 20px"';
@@ -5976,7 +5977,7 @@ function adPause(){ADS.paused=true;try{if(AUD.master)AUD.master.gain.value=0;if(
 function adResume(){clearTimeout(ADS.t);if(!ADS.paused)return;ADS.paused=false;last=performance.now();try{if(AUD.master)AUD.master.gain.value=AUD.on?.8:0;}catch(e){}}
 const FXQ={on:true,ema:16,lo:0,hi:0,t0:0};
 function fxTick(now){const f=now-(FXQ.last||now);FXQ.last=now;if(!P||document.hidden||f<=0||f>250)return;FXQ.ema+=(f-FXQ.ema)*.05;
-  if(FXQ.on){if(FXQ.ema>22){FXQ.lo+=f;if(FXQ.lo>2500){FXQ.on=false;FXQ.lo=0;FXQ.hi=0;}}else FXQ.lo=Math.max(0,FXQ.lo-f*.5);}
+  if(FXQ.on){if(FXQ.ema>22){FXQ.lo+=f;if(FXQ.lo>2500){FXQ.on=false;FXQ.lo=0;FXQ.hi=0;if(TOUCH&&!TLOW){TLOW=1;try{resize();}catch(e){}}}}else FXQ.lo=Math.max(0,FXQ.lo-f*.5);}
   else{if(FXQ.ema<18.5){FXQ.hi+=f;if(FXQ.hi>20000){FXQ.on=true;FXQ.hi=0;}}else FXQ.hi=0;}}
 const FXOK=()=>GFX_HI&&!GFX_MID&&FXQ.on&&!TOUCH;
 let LOOP_ACC=0;function loop(now){fxTick(now);if(GFX_MID){LOOP_ACC+=now-(loop.l||now);loop.l=now;if(LOOP_ACC<31){requestAnimationFrame(loop);return;}LOOP_ACC%=33;}else loop.l=now;let dt=Math.min(.2,Math.max(0,(now-last)/1000));last=now;if(P&&!ADS.paused){while(dt>.05){update(.05);dt-=.05;}update(dt);}render();requestAnimationFrame(loop);}
