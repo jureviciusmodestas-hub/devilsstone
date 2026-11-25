@@ -569,7 +569,7 @@ let W=0,H=0,DPR=1,vignette=null,TLOW=0;
 let GFX_HI=(()=>{try{return localStorage.getItem('sz_gfx')!=='0';}catch(e){return true;}})();let GFX_MID=(()=>{try{return localStorage.getItem('sz_gfx')==='2';}catch(e){return false;}})();
 var LSC=2;
 let VZ=1;
-function resize(){DPR=Math.min(window.devicePixelRatio||1,TOUCH?(GFX_HI&&!GFX_MID&&!TLOW?2:1.25):GFX_MID?1:GFX_HI?1.5:1);LSC=GFX_MID?3:2;VZ=TOUCH?.78:1;W=innerWidth/VZ;H=innerHeight/VZ;if(typeof lightCv!=='undefined'){lightCv.width=Math.ceil(W/LSC);lightCv.height=Math.ceil(H/LSC);}cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';
+function resize(){DPR=Math.min(window.devicePixelRatio||1,TOUCH?1.25:GFX_MID?1:GFX_HI?1.5:1);LSC=GFX_MID?3:2;VZ=TOUCH?.78:1;W=innerWidth/VZ;H=innerHeight/VZ;if(typeof lightCv!=='undefined'){lightCv.width=Math.ceil(W/LSC);lightCv.height=Math.ceil(H/LSC);}cv.width=Math.round(innerWidth*DPR);cv.height=Math.round(innerHeight*DPR);cv.style.width=innerWidth+'px';cv.style.height=innerHeight+'px';
   const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,0,.6)');vignette=g;}
 const lightCv=document.createElement('canvas'),lctx=lightCv.getContext('2d');
 const LSPR=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d');const g=x.createRadialGradient(64,64,0,64,64,64);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.45,'rgba(0,0,0,.65)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return c;})();
@@ -5728,7 +5728,8 @@ function checkReset(cb){fetch(String(window.ONLINE_DB).replace(/\/+$/,'')+'/r.js
       banner(tr('Veikėjas pradėtas iš naujo','Character restarted'),tr('Administratorius grąžino jūsų veikėją į 1 lygį','The administrator has reset your character to level 1'),'#ff8a7a');log(tr('Jūsų veikėjo lygis buvo neįprastai didelis, todėl administratorius jį grąžino į 1 lygį.','Your character level was unusually high, so the administrator reset it to level 1.'),'#ff8a7a');}}).catch(()=>{}).finally(()=>cb&&cb());}
 function netStart2(){if(NET.on)return;NET.db=String(window.ONLINE_DB).replace(/\/+$/,'');NET.on=true;
   try{NET.id=localStorage.getItem('sz_netid');if(!NET.id){NET.id='u'+Math.random().toString(36).slice(2,12);localStorage.setItem('sz_netid',NET.id);}}catch(e){NET.id='u'+Math.random().toString(36).slice(2,12);}
-  const openP=()=>{try{NET.es=new EventSource(NET.db+'/p.json');const h=ev=>{try{const d=JSON.parse(ev.data);if(!d)return;if(ev.type==='put')netApply(d.path,d.data);else if(ev.type==='patch'){for(const k in d.data)netApply(d.path.replace(/\/$/,'')+'/'+k,d.data[k]);}}catch(e){}};NET.es.addEventListener('put',h);NET.es.addEventListener('patch',h);NET.es.onerror=()=>{};}catch(e){}};
+  const openP=()=>{try{try{NET.es&&NET.es.close();}catch(_){}NET.lastEv=Date.now();NET.es=new EventSource(NET.db+'/p.json');const h=ev=>{NET.lastEv=Date.now();try{const d=JSON.parse(ev.data);if(!d)return;if(ev.type==='put')netApply(d.path,d.data);else if(ev.type==='patch'){for(const k in d.data)netApply(d.path.replace(/\/$/,'')+'/'+k,d.data[k]);}}catch(e){}};NET.es.addEventListener('put',h);NET.es.addEventListener('patch',h);NET.es.addEventListener('keep-alive',()=>{NET.lastEv=Date.now();});NET.es.onerror=()=>{if(NET.es&&NET.es.readyState===2&&!NET.reT){NET.reT=setTimeout(()=>{NET.reT=0;if(NET.on)openP();},3000);}};}catch(e){}};
+  NET.openP=openP;setInterval(()=>{if(!NET.on||document.hidden)return;if(Date.now()-(NET.lastEv||0)>40000){openP();NET.last='';NET.sendT=0;}},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden&&NET.on&&Date.now()-(NET.lastEv||0)>20000){openP();}});
   openP();netPollChat();setInterval(netPollChat,4000);
   addEventListener('beforeunload',netLeave);}
 function netPollChat(){if(!NET.on||NET.cbusy||document.hidden)return;NET.cbusy=true;const q=NET.lastKey?'orderBy=%22%24key%22&startAt=%22'+encodeURIComponent(NET.lastKey)+'%22&limitToFirst=30':'orderBy=%22%24key%22&limitToLast=25';
@@ -5988,11 +5989,12 @@ function adReady(){if(ADS.want){ADS.want=false;adBreak();}}
 function adPause(){ADS.paused=true;try{if(AUD.master)AUD.master.gain.value=0;if(window.speechSynthesis)speechSynthesis.cancel();}catch(e){}clearTimeout(ADS.t);ADS.t=setTimeout(adResume,60000);}
 function adResume(){clearTimeout(ADS.t);if(!ADS.paused)return;ADS.paused=false;last=performance.now();try{if(AUD.master)AUD.master.gain.value=AUD.on?.8:0;}catch(e){}}
 const FXQ={on:true,ema:16,lo:0,hi:0,t0:0};
-function fxTick(now){const f=now-(FXQ.last||now);FXQ.last=now;if(!P||document.hidden||f<=0||f>250)return;FXQ.ema+=(f-FXQ.ema)*.05;
+function fxTick(now){const f=now-(FXQ.last||now);FXQ.last=now;if(!P||document.hidden||f<=0||f>3000)return;FXQ.ema+=(f-FXQ.ema)*.05;
   if(FXQ.on){if(FXQ.ema>22){FXQ.lo+=f;if(FXQ.lo>2500){FXQ.on=false;FXQ.lo=0;FXQ.hi=0;if(TOUCH&&!TLOW){TLOW=1;try{resize();}catch(e){}}}}else FXQ.lo=Math.max(0,FXQ.lo-f*.5);}
   else{if(FXQ.ema<18.5){FXQ.hi+=f;if(FXQ.hi>20000){FXQ.on=true;FXQ.hi=0;}}else FXQ.hi=0;}}
 const FXOK=()=>GFX_HI&&!GFX_MID&&FXQ.on&&!TOUCH;
-let LOOP_ACC=0;function loop(now){fxTick(now);if(GFX_MID){LOOP_ACC+=now-(loop.l||now);loop.l=now;if(LOOP_ACC<31){requestAnimationFrame(loop);return;}LOOP_ACC%=33;}else loop.l=now;let dt=Math.min(.2,Math.max(0,(now-last)/1000));last=now;if(P&&!ADS.paused){while(dt>.05){update(.05);dt-=.05;}update(dt);}render();requestAnimationFrame(loop);}
+let LOOP_ACC=0;const LOOPERR={n:0,t:0};function loop(now){fxTick(now);if(GFX_MID){LOOP_ACC+=now-(loop.l||now);loop.l=now;if(LOOP_ACC<31){requestAnimationFrame(loop);return;}LOOP_ACC%=33;}else loop.l=now;let dt=Math.min(.2,Math.max(0,(now-last)/1000));last=now;try{if(P&&!ADS.paused){while(dt>.05){update(.05);dt-=.05;}update(dt);}}catch(e){loopErr(e,'u');}try{render();}catch(e){loopErr(e,'r');try{ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}catch(_){}}requestAnimationFrame(loop);}
+function loopErr(e,w){LOOPERR.n++;if(Date.now()-LOOPERR.t>5000){LOOPERR.t=Date.now();try{console.error('loop '+w,e);}catch(_){}}}
 requestAnimationFrame(loop);
 /* ================= TELEFONAS (lietimas) ================= */
 let lastTouch=0,touchOn=false,armedEl=null,armedT=0,lpTimer=null,lpFired=false;
