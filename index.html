@@ -201,6 +201,7 @@ body.touch #panelInv .cell{touch-action:none}
 .gold{margin-top:8px;font-weight:700;color:var(--gold2)}
 .hint{font-size:11px;color:#8f7a55;margin-top:6px;line-height:1.35}
 #tooltip{position:fixed;z-index:40;pointer-events:none;background:rgba(8,6,5,.97);border:1px solid var(--gold);border-radius:6px;padding:8px 10px;font-size:13px;max-width:260px;line-height:1.35}
+body.touch #log{transform:none;font-size:13px}body.touch #log>div{display:table;margin:2px auto 0;background:rgba(10,6,4,.62);border-radius:6px;padding:1px 8px}
 #log{position:fixed;left:50%;transform:translateX(-50%);bottom:122px;width:min(620px,60vw);text-align:center;pointer-events:none;z-index:4;font-size:13.5px;line-height:1.35;text-shadow:0 1px 2px #000,0 0 4px #000}
 #log div{transition:opacity 1s}
 #chatMsgs:empty::before{content:attr(data-ph);color:#8f7a55;opacity:.7}
@@ -1367,7 +1368,7 @@ function floatText(x,y,txt,col,size=15){floats.push({x,y,txt,col,size,t:0,dur:1.
 
 /* ================= ŽURNALAS ================= */
 const logEl=$i('log'),bn=$i('banner');let bT=0;
-function log(txt,col='#e9dfc8'){const d=document.createElement('div');setTimeout(()=>{d.style.opacity=0;setTimeout(()=>d.remove(),1000);},8000);d.textContent=txt;d.style.color=col;logEl.appendChild(d);while(logEl.children.length>7)logEl.firstChild.remove();
+function log(txt,col='#e9dfc8'){const d=document.createElement('div');setTimeout(()=>{d.style.opacity=0;setTimeout(()=>d.remove(),1000);},8000);d.textContent=txt;d.style.color=col;logEl.appendChild(d);while(logEl.children.length>(TOUCH?4:7))logEl.firstChild.remove();
   setTimeout(()=>{d.style.transition='opacity 1s';d.style.opacity=0;setTimeout(()=>d.remove(),1000);},9000);}
 function banner(txt,sub,col){bn.innerHTML=`<div style="color:${col||'var(--gold2)'}">${txt}</div>`+(sub?`<div style="font-size:15px;color:#d8c9a8">${sub}</div>`:'');bn.style.opacity=1;clearTimeout(bT);bT=setTimeout(()=>bn.style.opacity=0,2300);}
 
@@ -4735,7 +4736,12 @@ function layoutChat(){const c=$i('chat'),h=$i('hud');if(!c||!h)return;const uz=p
   c.style.bottom='';const cr=c.getBoundingClientRect(),hr=h.getBoundingClientRect();if(h.classList.contains('hidden')||!hr.width)return;
   const hpOrb=h.querySelector('.orb.hp'),left=hpOrb?hpOrb.getBoundingClientRect().left:hr.left;
   if(cr.right>left-6&&cr.bottom>hr.top){c.style.bottom=((innerHeight-hr.top+6)/uz)+'px';}}
-addEventListener('resize',()=>setTimeout(layoutChat,50));setInterval(layoutChat,1000);
+function layoutLog(){const L=$i('log'),h=$i('hud');if(!L||!h)return;if(!TOUCH){L.style.left=L.style.width=L.style.bottom='';return;}const hr=h.getBoundingClientRect();if(h.classList.contains('hidden')||!hr.width)return;const uz=parseFloat(getComputedStyle(L).zoom)||1;
+  const nm=h.querySelector('.pc,#pname,.nameplate')||null;let top=hr.top;h.querySelectorAll('*').forEach(e=>{const r=e.getBoundingClientRect();if(r.width&&r.height&&r.top<top&&r.bottom>hr.top-40)top=r.top;});
+  const tp=$i('tpad'),tr2=tp&&getComputedStyle(tp).display!=='none'?tp.getBoundingClientRect():null,cw=$i('chatWrite'),cr=cw&&cw.offsetParent?cw.getBoundingClientRect():null;
+  const l=Math.max(8,(cr?cr.right:0)+8),rgt=Math.min(innerWidth-8,(tr2?tr2.left:innerWidth)-6),w=Math.max(200,rgt-l);
+  L.style.left=(l/uz)+'px';L.style.width=(w/uz)+'px';L.style.bottom=((innerHeight-top+6)/uz)+'px';}
+addEventListener('resize',()=>setTimeout(()=>{layoutChat();layoutLog();},50));setInterval(()=>{layoutChat();layoutLog();},1000);
 document.addEventListener('click',e=>{if(e.target&&e.target.id==='crClose')$i('credits').classList.add('hidden');if(e.target&&e.target.id==='crSupport'&&window.SUPPORT_URL){try{window.open(window.SUPPORT_URL,'_blank','noopener');}catch(er){}}});
 function netPostLegend(){if(!NET.on||!P||!P.legend||P.lgBusy||LEG_HIDE[String(P.name).toLowerCase().trim()])return;const goat=!!P.goat,sup=!!P.superLegend||goat;if(goat?P.gtPost:sup?P.slPost2:P.lgPost2)return;if((NET.lvL|0)<(sup?115:80))return;P.lgBusy=1;
   const body={i:NET.id+'_'+(P.slot|0),n:String(P.name).slice(0,16),c:P.cls,l:clamp(Math.min(P.lvl|0,NET.lvL|0),1,400),t:NET.skewOk?Math.min(Number(P.legend)||Date.now(),Date.now())+NET.skew:{'.sv':'timestamp'}};if(sup)body.s=1;if(goat)body.g=1;
