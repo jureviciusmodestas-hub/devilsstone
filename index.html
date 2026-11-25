@@ -5444,7 +5444,7 @@ addEventListener('keydown',e=>{if(P&&e.key==='Enter'&&e.target.id!=='chatIn'&&e.
 $i('skillbar').addEventListener('click',e=>{const c=e.target.closest('[data-sk]');if(!c)return;if(Date.now()-lastTouch<900){castAuto(+c.dataset.sk);return;}P.rmb=+c.dataset.sk;renderSkillBar();log(tr('Dešiniam pelės mygtukui priskirta: ','Right mouse button: ')+tx(SKILLS[P.cls][P.rmb].name),'#cdbb95');save();});
 $i('skillbar').addEventListener('mousemove',e=>{const c=e.target.closest('[data-sk]');if(!c){hideTip();return;}showTip(skillTip(SKILLS[P.cls][+c.dataset.sk])+`<div class="sub2" style="margin-top:4px">${tr('Spauskite – priskirti dešiniam pelės mygtukui','Click – bind to right mouse button')}</div>`,e);});
 $i('skillbar').addEventListener('mouseleave',hideTip);
-pShop.addEventListener('mouseover',e=>{const pv=e.target.closest('[data-pvpi]');if(pv){showTip(itemTip({kind:PVP_SHOP[+pv.dataset.pvpi].kind},false),e);return;}const r=e.target.closest('[data-tsk]');if(r)showTip(skillTip(SKILLS[P.cls][+r.dataset.tsk]),e);});
+pShop.addEventListener('mouseover',e=>{const pv=e.target.closest('[data-pvpi]');if(pv){showTip(itemTip({kind:PVP_SHOP[+pv.dataset.pvpi].kind},false),e);return;}const r=e.target.closest('[data-tsk]');if(r&&!(TOUCH||Date.now()-lastTouch<900))showTip(skillTip(SKILLS[P.cls][+r.dataset.tsk]),e);});
 $i('chatIn').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){chatSend(e.target.value);e.target.value='';if(!document.body.classList.contains('mchat'))e.target.blur();}else if(e.key==='Escape'){e.target.value='';e.target.blur();}});
 $i('chatIn').addEventListener('focus',()=>{if(document.body.classList.contains('mchat')){setTimeout(()=>{mvv();chatBottom();},250);setTimeout(()=>{mvv();chatBottom();},700);}});
 $i('chatIn').addEventListener('blur',()=>{if(document.body.classList.contains('mchat'))return;$i('chatIn').classList.add('hidden');$i('chat').classList.remove('typing');});
@@ -6028,7 +6028,11 @@ $i('tpad').addEventListener('pointerdown',e=>{const b=e.target.closest('.tb');if
   if(b.dataset.tk!=null){const sk=SKILLS[P.cls][+b.dataset.tk];if(sk&&!(knows(sk.id)&&P.lvl>=sk.lvl)){floatText(P.x,P.y,tr('Įgūdis dar neišmoktas','Skill not learned yet'),'#ffb0b0',12);return;}castAuto(+b.dataset.tk);}
   else if(b.dataset.tp==='hp')usePotion('hp');else if(b.dataset.tp==='mp')usePotion('mp');else usePotion(b.dataset.tp);},{passive:false});
 // pirmas bakstelėjimas – aprašymas, antras – veiksmas
-const ARM_SEL='[data-inv],[data-eq],[data-tt],[data-si],[data-craft],[data-ach],[data-tsk],[data-learn]';
+const ARM_SEL='[data-inv],[data-eq],[data-tt],[data-si],[data-craft],[data-ach],[data-learn]';
+let LP_TIP=0,lpSkT=null;
+document.addEventListener('pointerdown',e=>{if(e.pointerType!=='touch')return;if(LP_TIP){LP_TIP=0;hideTip();}const r=e.target.closest&&e.target.closest('[data-tsk]');clearTimeout(lpSkT);if(!r||!P)return;
+  lpSkT=setTimeout(()=>{LP_TIP=1;lpFired=true;showTip(skillTip(SKILLS[P.cls][+r.dataset.tsk]),{clientX:e.clientX,clientY:e.clientY});if(navigator.vibrate)navigator.vibrate(20);},450);},true);
+['pointerup','pointercancel','pointermove'].forEach(t=>document.addEventListener(t,e=>{if(e.pointerType==='touch'&&(t!=='pointermove'||e.movementX*e.movementX+e.movementY*e.movementY>36))clearTimeout(lpSkT);},true));
 document.addEventListener('click',e=>{if(Date.now()-lastTouch>900)return;if(lpFired){lpFired=false;e.stopPropagation();e.preventDefault();return;}
   const el=e.target.closest(ARM_SEL);if(!el||e.target.closest('button'))return;
   if(armedEl===el&&Date.now()-armedT<6000){armedEl=null;return;}
