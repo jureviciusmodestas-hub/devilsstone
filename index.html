@@ -1441,7 +1441,7 @@ function toggleBoar(){if(!P||!P.boarM)return;P.onBoar=!P.onBoar;if(P.onBoar)P.mo
 function boarBtn(){const b=$i('bBoar');if(b)b.classList.toggle('hidden',!(P&&P.boarM));}
 document.addEventListener('click',e=>{if(e.target&&e.target.closest&&e.target.closest('#bBoar'))toggleBoar();});
 const MAG_R=3.2;
-function magOK(g){const it=g.item;if(!it)return false;if(it.kind==='gold'||it.kind==='mat')return true;if(it.kind==='qitem'){const q=SIDEQ[it.q];if(g.perm&&q&&(q.hidden||q.axe))return false;return true;}return false;}
+function magOK(g){const it=g.item;if(!it||!it.kind)return false;if(CMP_KINDS.includes(it.kind)||it.goat||it.unique)return false;if(it.kind==='qitem'){const q=SIDEQ[it.q];if(g.perm&&q&&(q.hidden||q.axe))return false;}return true;}
 function magnetTick(dt){if(!P||P.dead||P.sit)return;const now=time;for(let i=ground.length-1;i>=0;i--){const g=ground[i];if(!g||(g.noMag&&g.noMag>now)||!magOK(g))continue;const d=dist(g.x,g.y,P.x,P.y);if(d>MAG_R)continue;
   if(d<.45){pickup(g);if(ground.includes(g))g.noMag=now+6;continue;}const sp=Math.min(d,(3+(MAG_R-d)*4)*dt);g.x+=(P.x-g.x)/d*sp;g.y+=(P.y-g.y)/d*sp;g.mag=1;}}
 function pickup(g){const it=g.item;if(it.goat&&P&&!P.goat){P.goat=1;if(!P.legend)P.legend=Date.now();if(!P.superLegend)P.superLegend=Date.now();setTimeout(()=>{LEG_T=0;netPostLegend();},1500);sfx('levelup');if(!P.ng&&ngCan())setTimeout(ngOffer,7000);setTimeout(()=>banner('🐐 GOAT 🐐',tr('Nuo šiol visi matys tavo titulą GOAT','From now on everyone will see your GOAT title'),'#ffffff'),1200);}
