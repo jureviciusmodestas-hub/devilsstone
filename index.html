@@ -2273,9 +2273,10 @@ function limb(a,b,w0,w1,fill,hi){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx
   if(hi){ctx.strokeStyle=hi;ctx.lineWidth=.8;line(a[0]-nx*w0*.28,a[1]-ny*w0*.28,b[0]-nx*w1*.28,b[1]-ny*w1*.28);}}
 const CLOTH={knight:['#6e5c48','#4e3f30'],wizard:['#3a2468','#24154a'],elf:['#3f6a3a','#2a4a26'],shaman:['#7a5634','#53381f']};
 const WSPD=7.2;
-function legPts(i,walking,ph){const phase=ph+(i>0?0:Math.PI),th=walking?Math.sin(phase)*.6:(i>0?.06:-.05),be=walking?Math.max(0,Math.cos(phase))*.95+.06:.08;
+let RIDE=0;
+function legPts(i,walking,ph){if(RIDE){const w=walking?Math.sin(ph)*1.2:0,hx=i>0?1.4:-1,H=[hx,-20],K=[hx+9.6,-18.6],A=[K[0]+1.6+w,K[1]+11.4];return{H,K,A,th:.12,be:.1};}const phase=ph+(i>0?0:Math.PI),th=walking?Math.sin(phase)*.6:(i>0?.06:-.05),be=walking?Math.max(0,Math.cos(phase))*.95+.06:.08;
   const hx=i>0?1.4:-2,H=[hx,-20],K=[hx+Math.sin(th)*10.4,-20+Math.cos(th)*10.4],A=[K[0]+Math.sin(th-be)*10,K[1]+Math.cos(th-be)*10];const lift=walking?Math.max(0,Math.cos(phase-.3))*1.6:0;A[1]=Math.min(A[1],-.4)-lift*.4;return{H,K,A,th,be};}
-function drawLeg3(i,pants,boots,walking,ph,c){const{H,K,A,th,be}=legPts(i,walking,ph);const back=i<0;
+function drawLeg3(i,pants,boots,walking,ph,c){if(RIDE&&i<0)return;const{H,K,A,th,be}=legPts(i,walking,ph);const back=i<0;
   const pt=pants?TIERS[pants.tier]:null,bt=boots?TIERS[boots.tier]:null,cl=CLOTH[c]||CLOTH.knight;
   const pf=pt?mgrad(pt,H[0]-3,H[1],H[0]+3,K[1]):cl[0];limb(H,K,6.2,5.2,pf,pt?pt.hi:'rgba(255,255,255,.15)');
   const shinTop=K,mid=[K[0]+(A[0]-K[0])*.45,K[1]+(A[1]-K[1])*.45];limb(shinTop,mid,5.2,4.6,pf,null);
@@ -2338,7 +2339,7 @@ function drawFrontArm3(gl,arm,c){const S0=[3.6,-40.3],Hn=c==='knight'?[8,-29]:c=
 const HERO_C=new Map();
 function heroKey(walking){const E=P.eq,sig=k=>{const it=E[k];return it?(it.kind[0]+(it.tier|0)+'.'+(it.plus|0)+(it.unique?'u':'')+(it.cls?it.cls[0]:'')):'-';};
   const wf=walking?Math.floor((((P.walk*WSPD)/(Math.PI*2))%1+1)%1*10):-1,idf=walking?0:Math.floor((time*5)%10),af=P.atkAnim>0?Math.min(3,Math.ceil(P.atkAnim/.25*3)):0,bl=(!walking&&(time%4.3)<.13)?1:0;
-  return{key:[P.cls,P.face,P.mounted&&!P.dead?1:0,P.dead?1:0,P.god?1:0,S.set,sig('weapon'),sig('helm'),sig('armor'),sig('pants'),sig('gloves'),sig('boots'),sig('amulet'),wf,idf,af,bl].join('|'),wf,idf,af,bl};}
+  return{key:[P.cls,P.face,P.mounted&&!P.dead?1:(RIDE?2:0),P.dead?1:0,P.god?1:0,S.set,sig('weapon'),sig('helm'),sig('armor'),sig('pants'),sig('gloves'),sig('boots'),sig('amulet'),wf,idf,af,bl].join('|'),wf,idf,af,bl};}
 
 /* ===== Veikėjų piešimas v2: kontūras, šviesa, veidas ===== */
 const CH2={pcv:document.createElement('canvas'),scv:document.createElement('canvas'),W:150,H:175};CH2.p=CH2.pcv.getContext('2d');CH2.s=CH2.scv.getContext('2d');
@@ -2354,8 +2355,14 @@ function charEnd(o){if(o.skip)return;const p=CH2.p,s=CH2.s,w=CH2.pcv.width,h=CH2
 function drawFace(){ctx.save();ctx.beginPath();ctx.arc(1,-49,6.5,0,6.283);ctx.clip();const g=ctx.createLinearGradient(-5,0,7,0);g.addColorStop(0,'rgba(120,60,30,.35)');g.addColorStop(.6,'rgba(120,60,30,0)');ctx.fillStyle=g;ctx.fillRect(-6,-56,14,14);ctx.fillStyle='rgba(230,110,90,.25)';ell(4.6,-46.6,1.8,1,'rgba(230,110,90,.28)');ctx.restore();
   ell(-1.2,-48.6,1.3,1.9,'#d4a27c');ell(4.7,-49.3,1.55,1.25,'#ffffff');circ(5.35,-49.2,.85,'#2a1a10');ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(5.5,-49.8,.5,.5);
   ctx.strokeStyle='#4a2e1c';ctx.lineWidth=.9;line(3.1,-51.5,6.4,-51.2);poly([7.1,-49.2,8.5,-47.3,6.9,-46.9],'#d9a882');ctx.strokeStyle='#9a5a4a';ctx.lineWidth=.8;line(5.2,-45.4,6.9,-45.7);}
+function rideSaddle(x,y,s){ctx.save();ctx.translate(x,y);ctx.scale(s,s);
+  ctx.fillStyle='#7a1e1a';ctx.beginPath();ctx.moveTo(-13,-1);ctx.lineTo(13,-1);ctx.lineTo(12,7.5);ctx.lineTo(-12,7.5);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#e8d8b0';for(let k=0;k<6;k++)poly([-10+k*4,5,-8+k*4,3.4,-6+k*4,5,-8+k*4,6.6],'#e8d8b0');ctx.fillStyle='#2a5a2a';ctx.fillRect(-12,1.6,24,1.1);
+  ctx.strokeStyle='#e8c060';ctx.lineWidth=.8;for(let k=-12;k<=12;k+=2)line(k,7.5,k,9.4);
+  ctx.fillStyle='#4a2e18';ctx.beginPath();ctx.moveTo(-11,1);ctx.quadraticCurveTo(-12,-6,-7,-5);ctx.lineTo(6,-5);ctx.quadraticCurveTo(11,-8,12,-2);ctx.lineTo(12,3);ctx.lineTo(-11,3);ctx.closePath();ctx.fill();
+  ctx.fillStyle='rgba(255,220,170,.18)';ctx.fillRect(-7,-5,12,1.2);ctx.restore();}
 function drawPlayer(cx,cy){if(P.onBoar&&!P.dead&&!P.mounted){const mv=P.walking!==undefined?!!P.walking:!!(P.path&&P.path.length);const fm={t:{size:1.8,look:'boar'},type:'boar',moving:mv,atk:0,elite:false};ctx.save();ctx.translate(cx,cy);shadow(30,10);ctx.scale((P.face||1)*1.8,1.8);if(!mon3Draw(fm,time*(mv?10:2.5))){ell(0,-12,16,9,'#5a4232');}ctx.restore();
-    const sp=P.onBoar;P.onBoar=false;try{drawPlayerBody(cx,cy-19);}finally{P.onBoar=sp;}if(P.goat)label('🐐 GOAT 🐐',cx,cy-126,`hsl(${(time*90)%360},90%,82%)`,'bold 15px Almendra,serif');return;}
+    const sp=P.onBoar;P.onBoar=false;RIDE=1;try{drawPlayerBody(cx,cy-2);}finally{P.onBoar=sp;RIDE=0;}if(P.goat)label('🐐 GOAT 🐐',cx,cy-110,`hsl(${(time*90)%360},90%,82%)`,'bold 15px Almendra,serif');return;}
   if(P.sit&&!P.dead&&!P.skRef){ctx.save();ctx.beginPath();ctx.rect(cx-90,cy-220,180,219);ctx.clip();drawPlayerBody(cx,cy+8);ctx.restore();ctx.save();ctx.translate(cx,cy);ctx.transform(1,.5*((P.sit.f)||1),0,1,0,0);benchSeat();ctx.restore();return;}const ref=P.skRef||P,wd=(typeof P.x==='number')?wetAt(P.x,P.y):0,tg=wd===2?24:wd===1?4:0;
   if(ref._sk===undefined)ref._sk=tg;ref._sk+=(tg-ref._sk)*.15;if(Math.abs(tg-ref._sk)<.05)ref._sk=tg;const sk=ref._sk;
   if(sk<.3||P.dead){drawPlayerBody(cx,cy);return;}
@@ -2368,16 +2375,17 @@ function drawPlayer(cx,cy){if(P.onBoar&&!P.dead&&!P.mounted){const mv=P.walking!
   for(let k=0;k<2;k++){const t=((ph*.35+k*.5)%1),r=rw+t*(P.walking?16:10);ctx.globalAlpha=(1-t)*.45*f;ctx.beginPath();ctx.ellipse(cx,line+1,r,r*.34,0,0,6.283);ctx.stroke();}
   if(sk>5&&P.walking){const a=Math.sin(time*7);ctx.globalAlpha=.8;ctx.fillStyle='rgba(225,245,255,.85)';for(let k=0;k<3;k++){circ(cx+(a>0?1:-1)*(9+k*3),line-2-Math.abs(a)*5+k,1.3-k*.3,'rgba(225,245,255,.85)');}}
   ctx.restore();}
-function drawPlayerBody(cx,cy){const c=P.cls,E=P.eq,walking=P.walking&&!P.dead;let ph=walking?P.walk*WSPD:0,sw=Math.sin(ph);
+function drawPlayerBody(cx,cy){const _rideH=P.mounted&&!P.dead;if(_rideH)RIDE=1;try{drawPlayerBody0(cx,cy);}finally{if(_rideH)RIDE=0;}}
+function drawPlayerBody0(cx,cy){const c=P.cls,E=P.eq,walking=P.walking&&!P.dead;let ph=walking?P.walk*WSPD:0,sw=Math.sin(ph);
   let bob=walking?Math.abs(Math.cos(ph))*1.3:Math.sin(time*2)*.5;
   ctx.save();ctx.translate(cx,cy);
   if(S.set!==null){const t=TIERS[S.set];ctx.globalAlpha=.35+.15*Math.sin(time*3);ctx.strokeStyle=t.glow||t.hi;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,20,8,0,0,6.283);ctx.stroke();ctx.globalAlpha=1;}
-  shadow(P.mounted?34:14,P.mounted?11:6);ctx.restore();
+  if(!RIDE||P.mounted)shadow(P.mounted?34:14,P.mounted?11:6);ctx.restore();
   let _hk=null,_spr=null,_bl=0;const _sv=[P.walk,P.atkAnim,time];if(GFX_HI&&!(cx<-90||cx>W+90||cy<-60||cy>H+200)){_hk=heroKey(walking);_spr=HERO_C.get(_hk.key);_bl=_hk.bl;}
   if(_spr){HERO_C.delete(_hk.key);HERO_C.set(_hk.key,_spr);ctx.drawImage(_spr,cx-CH2.W/2,cy-(CH2.H-45),CH2.W,CH2.H);}else{
   if(_hk){if(_hk.wf>=0)P.walk=(_hk.wf/10*Math.PI*2)/WSPD;P.atkAnim=_hk.af/3*.25;time=_hk.wf>=0?_hk.wf*.1:_hk.idf/5;ph=walking?P.walk*WSPD:0;sw=Math.sin(ph);bob=walking?Math.abs(Math.cos(ph))*1.3:Math.sin(time*2)*.5;}else _bl=(!walking&&(time%4.3)<.13)?1:0;
   const _co=charBegin(cx,cy);if(_hk&&!_co.skip)_co.cache=document.createElement('canvas');ctx.save();ctx.translate(cx,cy);if(P.dead)ctx.globalAlpha=.45;
-  ctx.scale(P.face,1);if(P.mounted&&!P.dead){drawHorseBody(walking,ph*.8);ctx.translate(-2,-30);}ctx.translate(0,-bob);if(P.god&&!P.dead)drawWings();
+  ctx.scale(P.face,1);if(P.mounted&&!P.dead){drawHorseBody(walking,ph*.8);ctx.translate(-4,-11);rideSaddle(0,-20,1);}else if(RIDE)rideSaddle(0,-19,.75);ctx.translate(0,-bob);if(P.god&&!P.dead)drawWings();
   const arm=E.armor;
   if(c==='knight'){const t=arm?TIERS[arm.tier]:null,cc=!arm||arm.tier<2?'#8a1c1c':arm.tier===7?'rgba(95,230,255,.7)':arm.tier===5?'#b3261e':t.dk,wv=Math.sin(time*3+ph*.5)*2+(walking?-3:0);
     ctx.fillStyle=cc;ctx.beginPath();ctx.moveTo(-5,-42);ctx.quadraticCurveTo(-13,-28,-17+wv,-6);ctx.quadraticCurveTo(-10,-4+wv*.3,-3,-8);ctx.lineTo(-1,-40);ctx.closePath();ctx.fill();
@@ -2385,9 +2393,10 @@ function drawPlayerBody(cx,cy){const c=P.cls,E=P.eq,walking=P.walking&&!P.dead;l
   else if(arm&&arm.tier>=2){const t=TIERS[arm.tier];ctx.fillStyle=arm.tier===7?'rgba(95,230,255,.55)':arm.tier===5?'#b3261e':t.dk;ctx.beginPath();ctx.moveTo(-6,-40);ctx.lineTo(-14,-8+Math.sin(time*3)*1.5);ctx.lineTo(-3,-11);ctx.closePath();ctx.fill();}
   drawBackArm3(E.gloves,arm,walking,ph,c);
   drawLeg3(-1,E.pants,E.boots,walking,ph,c);drawLeg3(1,E.pants,E.boots,walking,ph,c);
-  if(c==='wizard')drawGarment3(c,arm,walking,ph);
+  const _gw=()=>{if(RIDE){ctx.save();ctx.beginPath();ctx.rect(-40,-90,80,77);ctx.clip();drawGarment3(c,arm,walking,ph);ctx.restore();}else drawGarment3(c,arm,walking,ph);};
+  if(c==='wizard')_gw();
   drawTorso3(arm,c,walking?0:Math.sin(time*2.2)*.012);
-  if(c!=='wizard')drawGarment3(c,arm,walking,ph);
+  if(c!=='wizard')_gw();
   drawHead3(c,_bl);
   if(E.helm)drawHelm(E.helm);else drawHair(c);
   if(E.amulet&&E.amulet.unique){glowOn('#ff2a2a',10);circ(1,-36,2.2,'#ff3b2a');glowOff();}
