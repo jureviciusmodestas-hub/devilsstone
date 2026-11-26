@@ -389,6 +389,21 @@ body.touch #qtrack .qsep{margin:3px 0 1px}
 #firstWin .fw2{font-family:'Alegreya',sans-serif;font-size:20px;color:#f4e6c8;margin-top:4px}
 #firstWin .fwb2{font-family:Almendra,serif;font-weight:800;font-size:26px;color:#ffb070;text-shadow:0 2px 6px #000}body.touch #firstWin .fwb2{font-size:19px}#firstWin .fw3{font-size:15px;color:#d8c8a8;margin-top:3px}
 body.touch #firstWin .fw1{font-size:22px}body.touch #firstWin .fw2{font-size:15px}body.touch #firstWin{top:36%;padding:8px 18px}
+#panelShop.zcw{left:50%!important;top:56px!important;transform:translateX(-50%);width:min(1240px,96vw)!important;max-height:calc(100vh - 170px);overflow-y:auto;box-sizing:border-box}
+body.touch #panelShop.zcw{top:6px!important;width:calc(98vw / var(--uiz,1))!important;max-height:calc((var(--vvh,100vh) - 12px) / var(--uiz,1))!important}
+.zctop{display:flex;gap:16px;align-items:center;flex-wrap:wrap}.zcintro{flex:1 1 380px;font-size:14px;line-height:1.4;color:#e8dcc0}
+.zctabs{display:flex;gap:6px}.zctab{display:flex;flex-direction:column;align-items:center;padding:6px 14px;border:1px solid #6a5028;border-radius:6px;background:rgba(0,0,0,.25);color:#e8d4a8;cursor:pointer;font-family:Almendra,serif;font-size:15px;line-height:1.1}
+.zctab small{font-family:'Alegreya',sans-serif;font-size:11px;opacity:.75}.zctab:hover{border-color:#c9a45c}.zctab.on{background:linear-gradient(180deg,#5a3e18,#2e1f0c);border-color:#ffd86a;color:#ffe9a8;box-shadow:0 0 12px rgba(255,200,90,.25)}
+.zcmats{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 8px;padding:6px 8px;background:rgba(0,0,0,.22);border-radius:6px}
+.zcm{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid rgba(201,164,92,.35);border-radius:12px;font-size:13px}.zcm small{opacity:.7;font-size:11px}
+.zcgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}@media (max-width:900px){.zcgrid{grid-template-columns:repeat(2,1fr)}}
+.zcc{background:linear-gradient(180deg,rgba(60,40,24,.6),rgba(24,16,10,.6));border:1px solid #5a4226;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.zchead{display:flex;gap:8px;align-items:center;min-height:42px}.zchead b{font-size:14px;line-height:1.15}
+.zcr{border-top:1px dashed rgba(201,164,92,.3);padding-top:6px;display:grid;grid-template-columns:1fr auto;gap:3px 6px;align-items:center}
+.zcrl{grid-column:1/3;font-size:12px;font-weight:700;color:#e8dcc0}.zcr.g .zcrl{color:#5dff7a}
+.zcneed{grid-column:1/3;display:flex;flex-wrap:wrap;gap:2px 6px;font-size:12.5px}.okm{color:#9cff9c}.nom{color:#ff9a8a}
+.zcgold{font-size:12.5px;color:#ffd86a}.zcgold.nom{color:#ff9a8a}.zcbtn{padding:3px 10px!important;font-size:13px!important}.zcbtn:disabled{opacity:.4}
+body.touch .zcgrid{grid-template-columns:repeat(4,1fr)}body.touch .zcc{padding:6px}body.touch .zcneed,body.touch .zcgold{font-size:12px}body.touch .zcintro{display:none}
 </style>
 </head>
 <body>
@@ -4290,21 +4305,31 @@ function sideTurnIn(id){const q=SIDEQ[id],s=sideSt(id),st=qStack(id);if(!s||s.do
 // ===== Gamintojas (Užmaršties žemės) =====
 const ZCRAFT={name:['Gamintojas Dievaitis','Dievaitis the Crafter'],role:['Užmaršties daiktai','Oblivion gear'],x:0,y:0,shop:'zcraft'};
 function zRecipe(tier,kind,green){const g=tier-ZT0,base=g*5+1,slots=['helm','armor','pants','gloves','boots'],mats=[];
-  if(kind==='weapon'){for(let k=0;k<5;k++)mats.push(['zm'+(base+k),24+g*12]);}else{const s=slots.indexOf(kind);for(let k=0;k<3;k++)mats.push(['zm'+(base+(s+k)%5),16+g*8]);}
-  let gold=(kind==='weapon'?400000:250000)*(g+1);if(green){for(const m of mats)m[1]*=2;mats.push(['zess',6+g*6]);gold*=3;}return{mats,gold};}
+  if(kind==='weapon'){for(let k=0;k<5;k++)mats.push(['zm'+(base+k),24+g*12]);}else if(kind==='ring'){mats.push(['zm'+(base+0),20+g*10],['zm'+(base+2),20+g*10]);}else if(kind==='amulet'){mats.push(['zm'+(base+1),20+g*10],['zm'+(base+3),20+g*10],['zm'+(base+4),20+g*10]);}else{const s=slots.indexOf(kind);for(let k=0;k<3;k++)mats.push(['zm'+(base+(s+k)%5),16+g*8]);}
+  let gold=(kind==='weapon'?400000:kind==='ring'||kind==='amulet'?300000:250000)*(g+1);if(green){for(const m of mats)m[1]*=2;mats.push(['zess',6+g*6]);gold*=3;}return{mats,gold};}
 let ZCT=ZT0;
-function openZCraft(n){shopOpen=n;const kinds=['weapon','helm','armor','pants','gloves','boots'];let h=`<h2>${tx(n.name)} <button class="x" data-close="panelShop">×</button></h2><div class="qbox"><div>${tr('Čia ginklai nekrenta – juos kalu aš. Atnešk Užmaršties medžiagų, ir pagaminsiu bet kurį daiktą. Žalią, pagerintą (+25%), galiu nukalti iš karto, bet jis kainuos gerokai brangiau.','No weapons drop here – I forge them. Bring me materials of Oblivion and I will make any item. I can forge an improved green one (+25%) straight away, but it costs far more.')}</div>
-  <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${[12,13,14].map(t=>`<button class="sbtn" data-zct="${t}" style="${ZCT===t?'background:#3a2e1a;border-color:#ffd86a':''}">${tx(TIERS[t].set)} · ${t===12?tr('1 rinkinys','set 1'):t===13?tr('2 rinkinys','set 2'):tr('3 rinkinys','set 3')}</button>`).join('')}</div>
-  <div class="sub2" style="margin-top:4px">${tr('Medžiagos krenta iš','Materials drop from')}: ${[1,2,3,4,5].map(k=>{const zi=(ZCT-ZT0)*5+k;return tx(MT['z'+zi].name)+' ('+MATS['zm'+zi].ico+')';}).join(', ')}</div></div>`;
-  for(const kind of kinds){const it=makeItem(kind,ZCT,P.cls);ITEMID--;h+=`<div class="qbox" style="margin-top:6px"><div style="display:flex;align-items:center;gap:8px"><span class="sico">${iconImg(it)}</span><b style="color:${itemColor(it)}">${itemName(it)}</b><span class="sub2">${tr('lygis','lvl')} ${reqLvl(it)}</span></div>`;
+function openZCraft(n){shopOpen=n;const kinds=['weapon','helm','armor','pants','gloves','boots','ring','amulet'];
+  let h=`<h2>⚒️ ${tx(n.name)} <button class="x" data-close="panelShop">×</button></h2>
+  <div class="zctop"><div class="zcintro">${tr('Čia ginklai nekrenta – juos kalu aš. Atnešk Užmaršties medžiagų, ir pagaminsiu bet kurį daiktą. <b style="color:#5dff7a">Žalią</b> (+25%) nukalsiu iš karto, bet jis kainuos gerokai brangiau.','No weapons drop here – I forge them. Bring me materials of Oblivion and I will make any item. A <b style="color:#5dff7a">green</b> one (+25%) I can forge straight away, but it costs far more.')}</div>
+  <div class="zctabs">${[12,13,14].map(t=>`<button class="zctab${ZCT===t?' on':''}" data-zct="${t}"><b>${tx(TIERS[t].set)}</b><small>${t===12?tr('1 rinkinys','set 1'):t===13?tr('2 rinkinys','set 2'):tr('3 rinkinys','set 3')}</small></button>`).join('')}</div></div>
+  <div class="zcmats"><span class="sub2">${tr('Tavo medžiagos','Your materials')}:</span> ${[1,2,3,4,5].map(k=>{const zi=(ZCT-ZT0)*5+k,mk='zm'+zi;return `<span class="zcm" title="${tx(MT['z'+zi].name)}">${MATS[mk].ico} <b>${matCount(mk)}</b> <small>${tx(MT['z'+zi].name)}</small></span>`;}).join('')}
+    ${(()=>{const g=zRecipe(ZCT,'weapon',true).mats.find(([k])=>!/^zm/.test(k));return g?`<span class="zcm">${MATS[g[0]].ico} <b>${matCount(g[0])}</b> <small>${tx(MATS[g[0]].name)}</small></span>`:'';})()}
+    <span class="zcm">🪙 <b>${P.gold.toLocaleString('lt')}</b></span></div>
+  <div class="zcgrid">`;
+  for(const kind of kinds){const it=makeItem(kind,ZCT,P.cls);ITEMID--;
+    h+=`<div class="zcc"><div class="zchead"><span class="sico">${iconImg(it)}</span><div><b style="color:${itemColor(it)}">${itemName(it)}</b><div class="sub2">${tr('lygis','lvl')} ${reqLvl(it)}</div></div></div>`;
     for(const green of[false,true]){const r=zRecipe(ZCT,kind,green),ok=P.gold>=r.gold&&r.mats.every(([k,n])=>matCount(k)>=n);
-      h+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px"><span style="min-width:74px;color:${green?'#5dff7a':'#e8dcc0'}">${green?'★ '+tr('Žalias','Green'):tr('Paprastas','Normal')}</span><span class="sub2" style="flex:1">${r.mats.map(([k,n])=>`<span style="color:${matCount(k)>=n?'#9cff9c':'#ff9a8a'}">${MATS[k].ico}${matCount(k)}/${n}</span>`).join(' ')} · ${r.gold.toLocaleString('lt')} ${tr('aukso','gold')}</span><button class="sbtn" data-zmk="${kind}|${green?1:0}" ${ok?'':'disabled style="opacity:.45"'}>${tr('Gaminti','Forge')}</button></div>`;}
+      h+=`<div class="zcr${green?' g':''}"><div class="zcrl">${green?'★ '+tr('Žalias +25%','Green +25%'):tr('Paprastas','Normal')}</div>
+        <div class="zcneed">${r.mats.map(([k,n])=>`<span class="${matCount(k)>=n?'okm':'nom'}">${MATS[k].ico}${matCount(k)}/${n}</span>`).join('')}</div>
+        <div class="zcgold${P.gold>=r.gold?'':' nom'}">🪙 ${r.gold.toLocaleString('lt')}</div>
+        <button class="sbtn zcbtn" data-zmk="${kind}|${green?1:0}" ${ok?'':'disabled'}>⚒️ ${tr('Gaminti','Forge')}</button></div>`;}
     h+='</div>';}
-  h+=gemOutHTML();pShop.innerHTML=h;pShop.classList.remove('hidden');}
+  h+='</div>'+gemOutHTML();pShop.innerHTML=h;pShop.classList.add('zcw');pShop.classList.remove('hidden');}
+setTimeout(()=>{try{new MutationObserver(()=>{if(!(shopOpen&&shopOpen.shop==='zcraft'))pShop.classList.remove('zcw');}).observe($i('panelShop'),{childList:true});}catch(e){}},0);
 document.addEventListener('click',e=>{const t=e.target&&e.target.closest&&e.target.closest('[data-zct],[data-zmk]');if(!t||!P||!shopOpen||shopOpen.shop!=='zcraft')return;
   if(t.dataset.zct){ZCT=+t.dataset.zct;openZCraft(shopOpen);return;}const[kind,gr]=t.dataset.zmk.split('|'),green=gr==='1',r=zRecipe(ZCT,kind,green);
   if(P.gold<r.gold||!r.mats.every(([k,n])=>matCount(k)>=n)){log(tr('Nepakanka medžiagų ar aukso.','Not enough materials or gold.'),'#ff7070');return;}if(P.inv.indexOf(null)<0){banner(tr('Inventorius pilnas!','Inventory is full!'),'','#ff8a7a');return;}
-  P.gold-=r.gold;for(const[k,n]of r.mats)takeMat(k,n);const it=makeItem(kind,ZCT,P.cls);it.exc=green;invPut(it);sfx('enchant_ok');effects.push({type:'enchant',x:P.x,y:P.y,t:0,dur:1.2,col:green?'#5dff7a':'#ffd86a'});
+  P.gold-=r.gold;for(const[k,n]of r.mats)takeMat(k,n);const it=makeItem(kind,ZCT,P.cls);it.exc=green;if(kind==='ring')it.stat=MAIN_STAT[P.cls]||it.stat;invPut(it);sfx('enchant_ok');effects.push({type:'enchant',x:P.x,y:P.y,t:0,dur:1.2,col:green?'#5dff7a':'#ffd86a'});
   banner(itemName(it),tr('Gamintojas nukalė tau naują daiktą!','The Crafter forged you a new item!'),itemColor(it));log('⚒️ '+itemName(it),itemColor(it));refreshInv();save();openZCraft(shopOpen);});
 function drawZCrafter(n,cx,cy){ctx.save();ctx.translate(cx,cy);shadow(22,8);ctx.fillStyle='#3a3a42';ctx.fillRect(10,-10,20,8);ctx.fillStyle='#5a5a66';ctx.fillRect(8,-14,24,5);ctx.fillStyle='#2a2a30';ctx.fillRect(16,-2,8,4);
   poly([-11,0,11,0,9,-36,-9,-36],'#2a4a48');poly([-8,-34,8,-34,7,-14,-7,-14],'#6a4a2a');ctx.fillStyle='#1a1a1a';ctx.fillRect(-10,-22,20,3);circ(0,-43,7.5,'#d8a882');ctx.fillStyle='#6a3a1a';ctx.beginPath();ctx.arc(0,-45,8,Math.PI,0);ctx.fill();poly([-6,-40,6,-40,4,-33,-4,-33],'#7a4a2a');circ(3,-44,1,'#111');
