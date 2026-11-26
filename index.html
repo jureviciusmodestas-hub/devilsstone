@@ -382,6 +382,13 @@ body.touch .panel .x{font-size:24px!important;min-width:40px;min-height:36px;lin
 /* telefonas: kompaktiškesnis užduočių langelis */
 body.touch #qtrack{font-size:11px!important;line-height:1.3!important;padding:5px 8px!important;min-width:0!important;max-width:min(46vw,300px)}
 body.touch #qtrack .qsep{margin:3px 0 1px}
+#firstWin{position:fixed;left:50%;top:35%;transform:translate(-50%,-50%) scale(.9);z-index:60;pointer-events:none;text-align:center;opacity:0;transition:opacity .6s,transform .6s;
+  padding:14px 34px;border-radius:10px;background:radial-gradient(ellipse at center,rgba(40,24,8,.88),rgba(20,12,4,.78));border:2px solid #c9a45c;box-shadow:0 0 40px rgba(255,180,60,.35);max-width:90vw}
+#firstWin.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#firstWin .fw1{font-family:Almendra,serif;font-weight:800;font-size:30px;color:#ffd86a;text-shadow:0 2px 8px #000,0 0 18px rgba(255,170,50,.6)}
+#firstWin .fw2{font-family:'Alegreya',sans-serif;font-size:20px;color:#f4e6c8;margin-top:4px}
+#firstWin .fwb2{font-family:Almendra,serif;font-weight:800;font-size:26px;color:#ffb070;text-shadow:0 2px 6px #000}body.touch #firstWin .fwb2{font-size:19px}#firstWin .fw3{font-size:15px;color:#d8c8a8;margin-top:3px}
+body.touch #firstWin .fw1{font-size:22px}body.touch #firstWin .fw2{font-size:15px}body.touch #firstWin{top:36%;padding:8px 18px}
 </style>
 </head>
 <body>
@@ -4575,7 +4582,7 @@ function refreshRank(){const el=$i('panelRank');if(!P||el.classList.contains('hi
   h+=`<div class="hint">${NET.on?(RK.data?tr('Rodomi visi online žaidėjai (žaidę per pastarąsias 45 d.). Jūsų veikėjai – žali. Lygis – serverio patvirtintas.','Showing all online players (active in the last 45 days). Your characters are green. Levels are server-verified.'):tr('Kraunamas bendras reitingas…','Loading the global ranking…')):tr('Neprisijungus prie online rodomi tik šios naršyklės veikėjai.','When offline, only characters from this browser are shown.')}</div>`;
   el.innerHTML=h;}
 $i('panelRank').addEventListener('click',e=>{const b=e.target.closest('[data-rtab]');if(b){rankTab=b.dataset.rtab;refreshRank();}});
-function trackKill(m){if(!P.stats)P.stats={kills:{},elites:0,bosses:0,deaths:0};if(!P.stats.best||MT[m.type].lvl>MT[P.stats.best].lvl)P.stats.best=m.type;P.stats.kills[m.type]=(P.stats.kills[m.type]||0)+1;if(m.elite)P.stats.elites++;if(m.t.boss)P.stats.bosses++;}
+function trackKill(m){if(!P.stats)P.stats={kills:{},elites:0,bosses:0,deaths:0};if(!P.stats.best||MT[m.type].lvl>MT[P.stats.best].lvl)P.stats.best=m.type;if(m.t.boss&&!m.summon&&!m.dummy&&!(P.stats.kills[m.type]>0))try{bossFirst(m.type);}catch(e){}P.stats.kills[m.type]=(P.stats.kills[m.type]||0)+1;if(m.elite)P.stats.elites++;if(m.t.boss)P.stats.bosses++;}
 
 /* ================= SKRYNIOS ================= */
 const CHESTS=[];
@@ -4729,8 +4736,8 @@ function chatPush(ch,name,txt,col){if(ch==='sys'){log(txt,col);return;}CHAT.push
 function esc(t){return String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function renderChat(){const box=$i('chatMsgs');if(!box)return;box.dataset.tp='';const cw=$i('chatWrite');if(cw)cw.textContent=tr('✏️ Rašyti žinutę','✏️ Write a message');const cq=$i('chatQuick');if(cq&&cq.dataset.l!==LANG){cq.dataset.l=LANG;const ph=LANG==='en'?['Hi! 👋','Thanks!','Anyone for a dungeon?','Join my party!','Selling','Buying','GG!']:['Labas! 👋','Ačiū!','Kas eina į požemį?','Prisijunk į grupę!','Parduodu','Perku','GG!'];cq.innerHTML=ph.map(t=>`<button data-q="${t}">${t}</button>`).join('')+['😂','👍','❤️','😮','😢','🔥','⚔️','🐉'].map(e=>`<button class="em" data-e="${e}">${e}</button>`).join('');}box.dataset.ph=tr('Enter – rašyti žinutę · /t – prekyba · /w Vardas – šnabždesys','Enter – write a message · /t – trade · /w Name – whisper');const list=CHAT.filter(m=>chatFilter==='all'||m.ch===chatFilter||(chatFilter==='say'&&m.ch==='whisper')).slice(-60);
   box.innerHTML=list.map(chatLine).join('');box.scrollTop=box.scrollHeight;requestAnimationFrame(chatBottom);}
-const chatPass=m=>chatFilter==='all'||m.ch===chatFilter||(chatFilter==='say'&&m.ch==='whisper');
-function chatLine(m){return m.ch==='death'?`<div style="color:#ff9a8a">💀 ${esc(m.txt)}</div>`:m.ch==='sys'?`<div style="color:${m.col||CHAN.sys.col}">${esc(m.txt)}</div>`:`<div><span style="color:${CHAN[m.ch].col};opacity:.8">[${LANG==='en'?CHAN[m.ch].en:CHAN[m.ch].lt}]</span> <b style="color:${m.name===(P&&P.name)?'#9cff9c':'#f0d48a'}">${esc(m.name)}:</b> <span style="color:${CHAN[m.ch].col}">${esc(m.txt)}</span></div>`;}
+const chatPass=m=>chatFilter==='all'||m.ch===chatFilter||(chatFilter==='say'&&(m.ch==='whisper'||m.ch==='first'));
+function chatLine(m){return m.ch==='first'?`<div style="color:#ffd86a;font-weight:700">${esc(m.txt)}</div>`:m.ch==='death'?`<div style="color:#ff9a8a">💀 ${esc(m.txt)}</div>`:m.ch==='sys'?`<div style="color:${m.col||CHAN.sys.col}">${esc(m.txt)}</div>`:`<div><span style="color:${CHAN[m.ch].col};opacity:.8">[${LANG==='en'?CHAN[m.ch].en:CHAN[m.ch].lt}]</span> <b style="color:${m.name===(P&&P.name)?'#9cff9c':'#f0d48a'}">${esc(m.name)}:</b> <span style="color:${CHAN[m.ch].col}">${esc(m.txt)}</span></div>`;}
 function chatAppend(m){const box=$i('chatMsgs');if(!box)return;if(!box.childElementCount){renderChat();return;}if(!chatPass(m))return;const stick=chatStick||(P&&m.name===P.name);box.insertAdjacentHTML('beforeend',chatLine(m));while(box.childElementCount>60)box.firstElementChild.remove();if(stick){box.scrollTop=box.scrollHeight;requestAnimationFrame(chatBottom);}}
 function chatSend(raw){const txt=raw.trim().slice(0,140);if(!txt||!P)return;
   if(txt==='/help'||txt==='/pagalba'){chatPush('sys','',tr('Komandos: tekstas – bendras kanalas, /p tekstas – prekyba, /w Vardas tekstas – šnabždesys, /help – pagalba.','Commands: text – general channel, /t text – trade, /w Name text – whisper, /help – help.'));return;}
@@ -5884,7 +5891,7 @@ function netBgBeat(){if(!document.hidden||!NET.on||!NET.id||!NET.db||!NET.lastSt
 setInterval(netBgBeat,15000);document.addEventListener('visibilitychange',()=>{try{if(document.hidden){NET.hidAt=Date.now();NET.bgGone=0;netBgBeat();}else{NET.hidAt=0;NET.bgGone=0;NET.last='';NET.sendT=0;NET.beatT=0;}}catch(e){}});
 function netLeave(){if(PARTY.ok||PARTY.inv||PARTY.joining)partyEnd();if(!NET.on||!NET.id)return;try{fetch(NET.db+'/p/'+NET.id+'.json',{method:'DELETE',keepalive:true});}catch(e){}NET.last='';}
 function netGotChat(k,m){if(!m||typeof m!=='object'||NET.seen.has(k))return;NET.seen.add(k);if(m.i===NET.id)return;if(isBanned(m.i,m.n))return;if(typeof m.t==='number'&&Date.now()-m.t>15*60*1000)return;
-  const name=netClean(String(m.n||'?').slice(0,16));if(m.ch==='death'){const dt=deathText(name,m.m);if(dt)chatPush('death',name,dt);return;}
+  const name=netClean(String(m.n||'?').slice(0,16));if(m.ch==='death'){const dt=deathText(name,m.m);if(dt)chatPush('death',name,dt);return;}if(m.ch==='first'){if(Date.now()-(m.t||0)<120000)firstShow(name,m.m);else{const ft=firstText(name,m.m);if(ft)chatPush('first',name,ft);}return;}
   const ch=m.ch==='trade'?'trade':'say',txt=netClean(m.m);if(!txt)return;chatPush(ch,name,txt);
   const o=NET.others[m.i];if(o&&ch==='say')o.say={txt,t:0};}
 const DEATH_T={
@@ -5896,6 +5903,16 @@ function deathText(n,code){const parts=String(code||'').split('|');const k=parts
   let m='',kn='';if(k==='m'||k==='b'){const t=MT[parts[1]];if(!t)return null;m=(parts[2]==='1'?tr('elitinis ','elite '):'')+tx(t.name);}else kn=netClean(String(parts[1]||'?').slice(0,16));
   let h=0;for(const ch of String(n)+code+(parts[3]||''))h=(h*31+ch.charCodeAt(0))>>>0;const tpl=list[h%list.length][LANG==='en'?1:0];
   const r=tpl.replace('{n}',n).replace('{m}',m).replace('{k}',kn);return r.charAt(0).toUpperCase()+r.slice(1);}
+/* pirmoji pergalė prieš bosą – pranešimas visiems */
+function firstText(n,code){const[t,l]=String(code).split('|');if(!MT[t])return null;return tr(`🏆 ${n} pirmą kartą įveikė bosą – ${tx(MT[t].name)}! (${l} lygis) Sveikiname!`,`🏆 ${n} defeated ${tx(MT[t].name)} for the first time at level ${l}! Congratulations!`);}
+function firstShow(n,code){const txt=firstText(n,code);if(!txt)return;chatPush('first',n,txt);const[t,l]=String(code).split('|');
+  FW.q.push({n,b:tx(MT[t].name),l});fwNext();}
+const FW={q:[],busy:false};
+function fwNext(){if(FW.busy||!FW.q.length)return;const it=FW.q.shift();FW.busy=true;let el=$i('firstWin');if(!el){el=document.createElement('div');el.id='firstWin';document.body.appendChild(el);}
+  el.innerHTML=`<div class="fw1">🏆 ${tr('Pirmoji pergalė!','First victory!')}</div><div class="fw2"><b>${esc(it.n)}</b> ${tr('pirmą kartą įveikė bosą','defeated for the first time')}</div><div class="fwb2">${esc(it.b)}</div><div class="fw3">${tr('Lygis','Level')} ${it.l} · ${tr('Sveikiname!','Congratulations!')}</div>`;
+  el.classList.remove('on');void el.offsetWidth;el.classList.add('on');try{sfx('quest');}catch(e){}setTimeout(()=>{el.classList.remove('on');setTimeout(()=>{FW.busy=false;fwNext();},700);},5200);}
+function bossFirst(type){if(!P)return;const code=type+'|'+P.lvl;setTimeout(()=>firstShow(P.name,code),1200);
+  if(!NET.on)return;try{fetch(NET.db+'/c.json',{method:'POST',body:JSON.stringify({i:NET.id,n:String(P.name).slice(0,16),m:code.slice(0,140),ch:'first',t:{'.sv':'timestamp'}})}).catch(()=>{});}catch(e){}}
 function netDeath(code){if(!P)return;code=code+'|'+(Date.now()%1000);const txt=deathText(P.name,code);if(txt)chatPush('death',P.name,txt);
   if(!NET.on)return;try{fetch(NET.db+'/c.json',{method:'POST',body:JSON.stringify({i:NET.id,n:String(P.name).slice(0,16),m:code.slice(0,140),ch:'death',t:{'.sv':'timestamp'}})}).catch(()=>{});}catch(e){}}
 function netChat(ch,body){if(!NET.on)return false;const now=Date.now();if(now-NET.chatT<1500){log(tr('Palaukite akimirką prieš rašydami vėl.','Wait a moment before writing again.'),'#8f7a55');return true;}NET.chatT=now;
