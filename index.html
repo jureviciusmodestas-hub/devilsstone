@@ -288,6 +288,27 @@ body.touch.mchat #chatClose{display:block;position:absolute;right:8px;top:6px;wi
 .cslot.empty{opacity:.7;border-style:dashed}
 .qcard:hover{border-color:var(--gold2);box-shadow:0 0 18px rgba(240,212,138,.35);transform:translateY(-2px)}
 .qcard .cico{font-size:40px}
+#scrHome{margin-top:26px}
+.hmenu{display:flex;flex-direction:column;align-items:center;gap:14px;width:min(440px,90vw);margin:0 auto}
+.hbtn{position:relative;width:100%;font-family:Almendra,serif;font-weight:800;font-size:21px;line-height:1.15;letter-spacing:1.5px;color:var(--gold2);padding:12px 34px 15px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;
+  background:linear-gradient(180deg,rgba(70,48,22,.88),rgba(28,18,9,.92));border:2px solid #8a6a32;border-radius:6px 14px 6px 14px;
+  box-shadow:0 4px 18px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,220,150,.18);transition:transform .15s,border-color .15s,box-shadow .15s,color .15s}
+.hbtn::before,.hbtn::after{content:'◆';position:absolute;top:50%;transform:translateY(-50%);font-size:10px;color:#8a6a32;transition:color .15s}
+.hbtn::before{left:12px}.hbtn::after{right:12px}
+.hbtn:hover,.hbtn:focus-visible{transform:translateY(-2px) scale(1.02);border-color:var(--gold);color:#fff3cf;box-shadow:0 6px 26px rgba(255,140,40,.28),inset 0 1px 0 rgba(255,220,150,.3);outline:none}
+.hbtn:hover::before,.hbtn:hover::after{color:#ff9a3a}
+.hbtn.hmain{font-size:24px;padding:16px 20px;border-color:var(--gold);background:linear-gradient(180deg,rgba(120,70,20,.92),rgba(50,26,8,.95));animation:hglow 2.6s ease-in-out infinite}
+.hbtn.hmain small{display:block;font-family:'Alegreya',sans-serif;font-weight:600;font-size:14px;letter-spacing:.5px;opacity:.85;margin-top:3px;color:#e8d4a8}
+@keyframes hglow{0%,100%{box-shadow:0 4px 18px rgba(0,0,0,.55),0 0 0 rgba(255,140,40,0)}50%{box-shadow:0 4px 18px rgba(0,0,0,.55),0 0 26px rgba(255,140,40,.35)}}
+.hlink{background:none;border:0;color:#c9a45c;font-size:14px;cursor:pointer;text-decoration:underline;margin-top:-8px;font-family:'Alegreya',sans-serif}
+.hlink:hover{color:#fff3cf}
+.hback{display:block;margin:0 auto 8px;background:none;border:1px solid #6a5028;color:#c9a45c;border-radius:6px;padding:4px 14px;cursor:pointer;font-family:'Alegreya',sans-serif;font-size:14px}
+.hback:hover{color:#fff3cf;border-color:var(--gold)}
+#hHero{position:absolute;left:max(1vw,calc(50% - 760px));bottom:9vh;width:min(28vw,360px);height:min(70vh,560px);pointer-events:none;z-index:0;display:none}
+#menu.mhome #hHero,#menu.mquick #hHero{display:block}
+@media (max-width:1100px),(max-height:520px){#menu.mhome #hHero,#menu.mquick #hHero{display:none}}
+#hCat{position:absolute;bottom:2%;left:0;width:160px;height:90px;pointer-events:none;z-index:0}
+#menu.mhome #ctrlHint{display:none!important}
 #qContinue small{display:block;font-family:'Alegreya',sans-serif;font-weight:600;font-size:13px;opacity:.85;margin-top:2px}
 .or{font-size:12px;color:#8f7a55;margin:8px 0 2px}
 .langsw{position:fixed;top:14px;right:14px;z-index:31;display:flex;gap:6px}
@@ -418,6 +439,8 @@ body.vert #panelTal,body.vert #panelInv,body.vert #panelChar,body.vert #panelSho
   <button id="mXfer" class="mxfer"><span class="i">📲</span><span><b></b><small></small></span></button>
   <button id="mFs" class="mfsbig" title="Visas ekranas / Fullscreen"><span class="i">⛶</span><span class="t">Visas ekranas</span></button>
   <div id="credit"></div>
+  <canvas id="hCat" width="160" height="90"></canvas>
+  <canvas id="hHero"></canvas>
   <canvas id="menuBg" style="position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none"></canvas>
   <div class="langsw"><button data-lang="lt">LT</button><button data-lang="en">EN</button><button id="mSound" class="on">🔊</button><button id="mBright" title="Ryškumas / Brightness">☀️</button><button id="mGfx" title="Grafika / Graphics">🎨</button><button id="mDiscord" class="dsc" title="Discord">💬 Discord</button></div>
   <div class="mbox">
@@ -427,7 +450,17 @@ body.vert #panelTal,body.vert #panelInv,body.vert #panelChar,body.vert #panelSho
 <path d="M30 84 L90 84" stroke="#c9a45c" stroke-width="2"/></svg>
 <h1 class="title" data-t="title"></h1><div class="logoOrn"><span></span>◆<span></span></div></div>
     <div class="sub" data-t="sub"></div>
-    <div id="scrQuick">
+    <div id="scrHome">
+      <div class="hmenu">
+        <button id="hCont" class="hbtn hmain hidden"></button>
+        <button id="hSwitch" class="hlink hidden"></button>
+        <button id="hNew" class="hbtn"></button>
+        <button id="hSet" class="hbtn"></button>
+        <button id="hInfo" class="hbtn"></button>
+      </div>
+    </div>
+    <div id="scrQuick" class="hidden">
+      <button id="qBack" class="hback"></button>
       <div id="badNote" class="hidden" style="color:#ff8a7a;margin:0 auto 10px;max-width:560px;font-size:15px"></div>
       <button id="qContinue" class="big hidden" style="margin:4px auto 14px;display:block;font-size:19px;padding:12px 30px"></button>
       <h3 class="title mh" id="qTitle"></h3>
@@ -554,7 +587,7 @@ function applyLang(){try{pwaBtn();}catch(e){}try{const m=$i('mXfer');m.querySele
   document.querySelectorAll('#chat .ctabs button').forEach(b=>{const k=b.dataset.cf;b.textContent=k==='all'?tr('Visi','All'):(LANG==='en'?CHAN[k].en:CHAN[k].lt);b.classList.toggle('on',k===chatFilter);});$i('chatIn').placeholder=TOUCH?tr('Rašykite žinutę…','Type a message…'):tr('Rašykite žinutę… (Enter – siųsti)','Type a message… (Enter – send)');if(typeof renderChat==='function')renderChat();
   document.querySelectorAll('.langsw button').forEach(b=>b.classList.toggle('on',b.dataset.lang===LANG));
   const inp=$i('inName');if(!inp.value||inp.value==='Herojus'||inp.value==='Hero')inp.value=tr('Herojus','Hero');
-  if(typeof renderQuick==='function'&&$i('scrQuick')&&!$i('scrQuick').classList.contains('hidden'))renderQuick();
+  if(typeof renderQuick==='function'&&$i('scrQuick')&&!$i('scrQuick').classList.contains('hidden'))renderQuick();if(typeof renderHome==='function'&&$i('scrHome')&&!$i('scrHome').classList.contains('hidden'))renderHome();
   $i('help').innerHTML=helpHTML();$i('bLang').textContent=LANG==='lt'?'EN':'LT';document.title=tr('Velnio Akmuo – RPG',"Devil's Stone – RPG");
   $i('slotQ').title=tr('Gyvybės eliksyras (Q)','Health potion (Q)');$i('slotW').title=tr('Manos eliksyras (W)','Mana potion (W)');
   $i('bChar').title=tr('Personažas (C)','Character (C)');$i('bInv').title=tr('Inventorius (I)','Inventory (I)');$i('bTal').title=tr('Talentai (T)','Talents (T)');$i('bHelp').title=tr('Pagalba (H)','Help (H)');$i('bSound').title=tr('Nustatymai: garsas, ryškumas, grafika, kalba','Settings: sound, brightness, graphics, language');try{$i('bSupport').querySelector('.ht').textContent=tr('Paremti','Support');}catch(e){}$i('bRank').title=tr('Reitingai (R)','Rankings (R)');$i('bAch').title=tr('Pasiekimai (P)','Achievements (P)');$i('bLang').title=tr('Kalba / Language','Language / Kalba');$i('bExit').title=tr('Išeiti į meniu (Esc)','Exit to menu (Esc)');$i('bHome').title=tr('Grįžti į kaimą (B)','Return to village (B)');$i('bSupport').title=tr('Paremti kūrėją','Support the developer');$i('qSupport').textContent=tr('❤️ Paremti kūrėją','❤️ Support the developer');
@@ -2351,7 +2384,7 @@ function heroKey(walking){const E=P.eq,sig=k=>{const it=E[k];return it?(it.kind[
 
 /* ===== Veikėjų piešimas v2: kontūras, šviesa, veidas ===== */
 const CH2={pcv:document.createElement('canvas'),scv:document.createElement('canvas'),W:150,H:175};CH2.p=CH2.pcv.getContext('2d');CH2.s=CH2.scv.getContext('2d');
-function charBegin(cx,cy){const o={cx,cy,old:ctx,dpr:Math.min(DPR,1.5)};if(!GFX_HI||ctx===MBG.c||(ctx===_mainCtx()&&(cx<-90||cx>W+90||cy<-60||cy>H+200))){o.skip=1;return o;}const dp=o.dpr,w=Math.ceil(CH2.W*dp),h=Math.ceil(CH2.H*dp);if(CH2.pcv.width!==w||CH2.pcv.height!==h){CH2.pcv.width=CH2.scv.width=w;CH2.pcv.height=CH2.scv.height=h;}
+function charBegin(cx,cy){const o={cx,cy,old:ctx,dpr:Math.min(DPR,1.5)};if(!GFX_HI||ctx===MBG.c||(ctx.canvas&&ctx.canvas.id==='hHero')||(ctx===_mainCtx()&&(cx<-90||cx>W+90||cy<-60||cy>H+200))){o.skip=1;return o;}const dp=o.dpr,w=Math.ceil(CH2.W*dp),h=Math.ceil(CH2.H*dp);if(CH2.pcv.width!==w||CH2.pcv.height!==h){CH2.pcv.width=CH2.scv.width=w;CH2.pcv.height=CH2.scv.height=h;}
   const p=CH2.p;p.setTransform(1,0,0,1,0,0);p.globalAlpha=1;p.globalCompositeOperation='source-over';p.filter='none';p.clearRect(0,0,w,h);p.setTransform(dp,0,0,dp,(CH2.W/2-cx)*dp,(CH2.H-45-cy)*dp);ctx=p;return o;}
 const _mainCtx=()=>cv.getContext('2d');
 function charEnd(o){if(o.skip)return;const p=CH2.p,s=CH2.s,w=CH2.pcv.width,h=CH2.pcv.height;ctx=o.old;
@@ -5547,7 +5580,7 @@ function logout(){if(!P)return;netLeave();
   if(P.hp<1)P.hp=1;save();npcHush();closeShop();hideTip();
   document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));
   for(const id of['chat','hud','miniwrap'])$i(id).classList.add('hidden');
-  P=null;refreshQuest();$i('menu').classList.remove('hidden');SLOTS_DATA=loadSlots();renderSlots();showScreen('scrQuick');}
+  P=null;refreshQuest();$i('menu').classList.remove('hidden');SLOTS_DATA=loadSlots();renderSlots();showScreen('scrHome');}
 const EXIT_T=30;
 function askExit(){if(!P)return;if(!P.dead&&!inTown(P.x,P.y)){if(P.recall&&P.recall.exit){cancelRecall(tr('Išėjimas atšauktas','Exit cancelled'));return;}
     askConfirm(tr('Išeiti į pagrindinį meniu?','Exit to main menu?'),tr(`Už kaimo išeiti iš karto negalima. Stovėkite vietoje <b>${EXIT_T} sekundžių</b> – jei judėsite ar būsite užpulti, išėjimas nutrūks.<br><br>Kaime išeiti galima iš karto. Kitą kartą prisijungę atsirasite toje pačioje vietoje.`,`You cannot leave instantly outside the village. Stand still for <b>${EXIT_T} seconds</b> – moving or being attacked cancels it.<br><br>In the village you can leave instantly. Next time you log in you will appear in the same place.`),tr(`Išeiti po ${EXIT_T} s`,`Exit in ${EXIT_T} s`),()=>{if(P.recall)P.recall=null;P.recall={t:EXIT_T,T:EXIT_T,x:P.x,y:P.y,exit:true};P.path=[];P.target=null;P.pendingSkill=null;log(tr(`Išeinama… (${EXIT_T} s, nejudėkite)`,`Leaving… (${EXIT_T} s, stand still)`),'#9fd8ff');});return;}
@@ -5569,12 +5602,56 @@ function supNag(lv){if(!window.SUPPORT_URL||!P)return;if(supDone()){if(lv==='dev
 if(window.SUPPORT_URL){$i('bSupport').classList.remove('hidden');$i('qSupport').classList.remove('hidden');}
 $i('bSupport').onclick=()=>{openSupport();$i('bSupport').blur();};$i('qSupport').onclick=openSupport;
 
-function showScreen(id){for(const s of['scrQuick','scrServer','scrChars','scrCreate'])$i(s).classList.toggle('hidden',s!==id);if(id==='scrQuick')renderQuick();}
+function showScreen(id){for(const s of['scrHome','scrQuick','scrServer','scrChars','scrCreate'])$i(s).classList.toggle('hidden',s!==id);$i('menu').classList.toggle('mhome',id==='scrHome');$i('menu').classList.toggle('mquick',id==='scrQuick');if(id==='scrQuick')renderQuick();if(id==='scrHome')renderHome();}
+function renderHome(){const i=lastSlot(),d=i>=0?SLOTS_DATA[i]:null,b=$i('hCont'),n=SLOTS_DATA.filter(Boolean).length;
+  if(d){b.classList.remove('hidden');b.innerHTML=`${tr('Tęsti su','Continue as')} ${d.name}<small>${tx(CLASSES[d.cls].name)} · ${tr('lygis','level')} ${d.lvl}</small>`;}else b.classList.add('hidden');
+  $i('hSwitch').classList.toggle('hidden',n<2);$i('hSwitch').textContent=tr('Pasirinkti kitą veikėją','Choose another character');
+  $i('hNew').textContent=d?tr('Kurti naują veikėją','Create a new character'):tr('Pradėti nuotykį','Start the adventure');
+  $i('hSet').textContent=tr('Nustatymai','Settings');$i('hInfo').textContent=tr('Informacija','Information');$i('qBack').textContent='← '+tr('Atgal','Back');}
+function openHomeInfo(){const h=`<div style="text-align:left;line-height:1.45">${tr('<b>Velnio Akmuo</b> – senosios mokyklos izometrinis internetinis RPG, įkvėptas lietuvių mitologijos. Pradedi skarmalais mažame kaime, renkiesi riterį, burtininką, elfą ar šamaną ir kovoji per miškus, požemius ir mirusiųjų karalystę iki paties Velnio – kartu su kitais žaidėjais.','<b>Devil\'s Stone</b> is an old-school isometric online RPG inspired by Lithuanian mythology. You start in rags in a small village, choose a Knight, Wizard, Elf or Shaman and fight your way through forests, dungeons and the realm of the dead to face the Devil himself – together with other players.')}
+  <h3 style="margin:12px 0 6px;color:var(--gold2)">${tr('Valdymas','Controls')}</h3><div class="controls kc" style="position:static;margin:0">${$i('ctrlHint').innerHTML}</div>
+  <div style="margin-top:12px;font-size:13px;opacity:.8">${$i('credit').innerHTML||''}</div></div>`;
+  askConfirm('📜 '+tr('Informacija','Information'),h,tr('Gerai','OK'),()=>{});try{$i('cfNo').style.display='none';}catch(e){}}
+function openHomeSettings(){try{renderSnd();const el=$i('panelSnd');el.classList.remove('hidden');el.style.zIndex=40;}catch(e){}}
+$i('hCont').onclick=()=>{const i=lastSlot();if(i<0)return;selSlot=i;playSlot();};
+$i('hSwitch').onclick=()=>{SLOTS_DATA=loadSlots();selSlot=SLOTS_DATA.findIndex(Boolean);showScreen('scrChars');renderSlots();};
+$i('hNew').onclick=()=>showScreen('scrQuick');$i('hSet').onclick=openHomeSettings;$i('hInfo').onclick=openHomeInfo;
+setTimeout(()=>{try{$i('qBack').onclick=()=>showScreen('scrHome');if(!P&&!$i('scrHome').classList.contains('hidden'))showScreen('scrHome');}catch(e){}},0);
+/* menu cat – Bruise strolls along the bottom */
+const HCAT={x:-80,dir:1,t:0,sit:0,last:0};
+/* big hero on the left of the menu: geared when continuing, in rags when creating */
+const HH={rag:false,cls:null,rc:0};
+function drawHomeHero(){const cv2=$i('hHero');if(!cv2||!cv2.offsetParent)return;const m=$i('menu');const quick=m.classList.contains('mquick');
+  const dpr=Math.min(devicePixelRatio||1,2),w=cv2.clientWidth,h=cv2.clientHeight;if(!w||!h)return;if(cv2.width!==Math.round(w*dpr)||cv2.height!==Math.round(h*dpr)){cv2.width=Math.round(w*dpr);cv2.height=Math.round(h*dpr);}
+  const i=lastSlot(),d=i>=0?SLOTS_DATA[i]:null;const CL=['knight','wizard','elf','shaman'];
+  let rag=quick||HH.rag||!d,cls,eq,name='',sub='';
+  if(rag){cls=HH.cls||(quick?null:(d&&HH.rag?d.cls:null))||CL[(HCAT.t/4|0)%4];const np=newPlayer('',cls);eq=np.eq;name=tx(CLASSES[cls].name);sub=tr('Naujas herojus – tik skarmalai ir surūdijęs ginklas','A new hero – rags and a rusty weapon');}
+  else{cls=d.cls;eq=d.eq||{};name=d.name;sub=tx(CLASSES[cls].name)+' · '+tr('lygis','level')+' '+d.lvl;}
+  const c=cv2.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv2.width,cv2.height);
+  const W=w,H=h,sc=Math.min(W/62,(H-80)/84);c.setTransform(dpr,0,0,dpr,0,0);
+  // pedestal glow
+  const gx=W/2,gy=H-92;const g=c.createRadialGradient(gx,gy,6,gx,gy,W*.55);g.addColorStop(0,rag?'rgba(200,170,130,.22)':'rgba(255,170,70,.32)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  c.fillStyle='rgba(0,0,0,.45)';c.beginPath();c.ellipse(gx,gy+6,W*.3,W*.07,0,0,6.283);c.fill();
+  c.strokeStyle=rag?'rgba(200,170,130,.35)':'rgba(255,190,90,.55)';c.lineWidth=2;c.beginPath();c.ellipse(gx,gy+6,W*.3,W*.07,0,0,6.283);c.stroke();
+  let setT=null;try{const ts=['helm','armor','pants','gloves','boots'].map(k=>eq[k]&&eq[k].tier);if(ts.every(t=>t!=null&&t===ts[0]))setT=ts[0];}catch(e){}
+  const sp=P,ss=S,sv=ctx,st=time;try{P={cls,eq,face:1,walk:0,walking:false,dead:false,flash:0,atkAnim:0,name:'',mounted:false,lvl:d&&!rag?d.lvl:1};S={set:rag?null:setT};ctx=c;time=HCAT.t;
+    c.save();c.translate(gx,gy);c.scale(sc,sc);c.translate(1000,0);drawPlayer(-1000,0);c.restore();}catch(e){HH.err=String(e&&e.stack||e);}finally{P=sp;S=ss;ctx=sv;time=st;}
+  c.setTransform(dpr,0,0,dpr,0,0);c.textAlign='center';c.shadowColor='rgba(0,0,0,.9)';c.shadowBlur=8;
+  c.font="800 26px Almendra,serif";c.fillStyle=rag?'#e8d8b8':'#ffd77a';c.fillText(name,gx,H-34);
+  c.font="600 15px Alegreya,sans-serif";c.fillStyle='#d8c8a8';c.fillText(sub,gx,H-12);c.shadowBlur=0;}
+setTimeout(()=>{try{const hn=$i('hNew');hn.addEventListener('mouseenter',()=>HH.rag=true);hn.addEventListener('mouseleave',()=>HH.rag=false);
+  document.querySelectorAll('.qcard').forEach(cd=>{cd.addEventListener('mouseenter',()=>HH.cls=cd.dataset.qcls);cd.addEventListener('mouseleave',()=>HH.cls=null);});}catch(e){}},0);
+function hCatTick(ts){requestAnimationFrame(hCatTick);const m=$i('menu');if(!m||m.classList.contains('hidden'))return;const cv2=$i('hCat');if(!cv2)return;
+  const dt=Math.min(.05,(ts-(HCAT.last||ts))/1000);HCAT.last=ts;HCAT.t+=dt;try{drawHomeHero();}catch(e){}const W=innerWidth;
+  if(HCAT.sit>0){HCAT.sit-=dt;}else{HCAT.x+=HCAT.dir*38*dt;if(Math.random()<dt*.08)HCAT.sit=2.5+Math.random()*3;if(HCAT.x>W+60){HCAT.dir=-1;}if(HCAT.x<-120){HCAT.dir=1;}}
+  cv2.style.left=HCAT.x+'px';const c2=cv2.getContext('2d');c2.setTransform(1,0,0,1,0,0);c2.clearRect(0,0,cv2.width,cv2.height);
+  const sc=ctx,st=time;ctx=c2;time=HCAT.t;try{ctx.save();ctx.translate(80,72);ctx.scale(2.2,2.2);drawCat2({x:3,face:HCAT.dir>0?1:-1,moving:HCAT.sit<=0,petEnd:0});ctx.restore();}catch(e){}ctx=sc;time=st;}
+requestAnimationFrame(hCatTick);
 const QNAMES={shaman:['Krivis','Lizdeika','Ąžuolas','Sakalas','Kernius','Daugirdas','Vėjūnas','Girdenis'],knight:['Aras','Vilkas','Gintas','Rimas','Vytenis','Kovas','Daumantas','Tautvydas'],wizard:['Žynys','Saulius','Mindas','Gedas','Vaidotas','Dovas','Linas','Rytis'],elf:['Eglė','Rūta','Gabija','Milda','Austė','Vaiva','Laima','Jūratė']};
 function lastSlot(){let i=-1;try{i=+localStorage.getItem('sz_last');}catch(e){}SLOTS_DATA=loadSlots();if(!(i>=0&&SLOTS_DATA[i]))i=SLOTS_DATA.findIndex(Boolean);return i;}
 function renderQuick(){const i=lastSlot(),d=i>=0?SLOTS_DATA[i]:null,b=$i('qContinue');$i('qMsg').textContent='';
-  if(d){b.classList.remove('hidden');b.innerHTML=`▶ ${tr('Tęsti','Continue')}<small>${d.name} · ${tx(CLASSES[d.cls].name)} · ${tr('lygis','level')} ${d.lvl}</small>`;}else b.classList.add('hidden');
-  $i('qTitle').textContent=d?tr('…arba pradėk naują herojų','…or start a new hero'):tr('Pasirink savo herojų','Choose your hero');}
+  if(false){b.classList.remove('hidden');b.innerHTML=`▶ ${tr('Tęsti','Continue')}<small>${d.name} · ${tx(CLASSES[d.cls].name)} · ${tr('lygis','level')} ${d.lvl}</small>`;}else b.classList.add('hidden');
+  $i('qTitle').textContent=tr('Pasirink savo herojų','Choose your hero');}
 function quickName(cls){const used=new Set(SLOTS_DATA.filter(Boolean).map(d=>d.name.toLowerCase()));const pool=QNAMES[cls].slice().sort(()=>Math.random()-.5);
   for(const n of pool)if(!used.has(n.toLowerCase()))return n;for(let k=2;k<99;k++){const n=pool[0]+k;if(!used.has(n.toLowerCase()))return n;}return pool[0];}
 function quickStart(cls){SLOTS_DATA=loadSlots();const slot=SLOTS_DATA.findIndex(d=>!d);
@@ -5648,7 +5725,7 @@ if(window.IS_PWA&&'serviceWorker' in navigator&&location.protocol==='https:'){wi
 $i('bXfer').onclick=xferOpen;$i('mXfer').onclick=()=>xferOpen();
 $i('slots').addEventListener('dblclick',e=>{const c=e.target.closest('[data-slot]');if(c&&SLOTS_DATA[+c.dataset.slot]){selSlot=+c.dataset.slot;playSlot();}});
 $i('srvAusra').onclick=()=>{SLOTS_DATA=loadSlots();selSlot=SLOTS_DATA.findIndex(Boolean);showScreen('scrChars');renderSlots();};
-$i('bBackSrv').onclick=()=>showScreen('scrQuick');
+$i('bBackSrv').onclick=()=>showScreen('scrHome');
 document.querySelectorAll('[data-qcls]').forEach(c=>c.addEventListener('click',()=>{audioResume&&audioResume();quickStart(c.dataset.qcls);}));
 $i('ptsStat').onclick=()=>{pChar.classList.remove('hidden');refreshChar();updatePtsBar();};
 $i('ptsTal').onclick=()=>{pTal.classList.remove('hidden');refreshTal();updatePtsBar();};
