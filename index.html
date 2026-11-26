@@ -4606,24 +4606,28 @@ const statTotal=st=>st&&st.kills?Object.values(st.kills).reduce((a,b)=>a+b,0):0;
 // Bendras (online) reitingas: /rk/<id>_<slot>; lygis – serverio patvirtintas
 const RK={data:null,t:0,busy:false,postT:0};
 function rkPost(){if(!NET.on||!P||!NET.lvL||NET.banned)return;const now=Date.now();if(now-RK.postT<90000)return;RK.postT=now;
-  const st=P.stats||{};const body={n:String(P.name).slice(0,16),c:P.cls,l:Math.max(1,Math.min(P.lvl|0,NET.lvL|0)),k:Math.min(statTotal(st)|0,10000000),e:(st.elites|0),b:(st.bosses|0),d:(st.deaths|0),t:{'.sv':'timestamp'}};
+  const st=P.stats||{};const body={n:String(P.name).slice(0,16),c:P.cls,l:Math.max(1,Math.min(P.lvl|0,NET.lvL|0)),k:Math.min(statTotal(st)|0,10000000),e:(st.elites|0),b:(st.bosses|0),d:(st.deaths|0),g:(P.ng&&P.goat)?1:0,t:{'.sv':'timestamp'}};
   try{fetch(NET.db+'/rk/'+NET.id+'_'+(P.slot|0)+'.json',{method:'PUT',body:JSON.stringify(body)}).catch(()=>{});}catch(e){}}
 setInterval(()=>{try{rkPost();}catch(e){}},30000);
 function rkLoad(){if(!NET.on||RK.busy)return;if(RK.data&&Date.now()-RK.t<30000)return;RK.busy=true;
   fetch(NET.db+'/rk.json?orderBy="l"&limitToLast=200').then(r=>r.ok?r.json():null).then(d=>{if(d&&typeof d==='object'){RK.data=d;RK.t=Date.now();refreshRank();}}).catch(()=>{}).finally(()=>{RK.busy=false;});}
-function rankRows(){save();const mine=SLOTS_DATA.filter(d=>d&&CLASSES[d.cls]).map(d=>({name:d.name,cls:d.cls,lvl:d.lvl,xp:d.xp,kills:statTotal(d.stats),elites:(d.stats&&d.stats.elites)||0,bosses:(d.stats&&d.stats.bosses)||0,deaths:(d.stats&&d.stats.deaths)||0,rating:(d.arena&&d.arena.rating)||1000,aw:(d.arena&&d.arena.w)||0,al:(d.arena&&d.arena.l)||0,me:P&&d.name===P.name}));
-  if(!NET.on||!RK.data)return mine;const out=[],hide=n=>{const k=String(n).toLowerCase().trim();return LEG_HIDE[k]||LEG_R[k];};const myKey=NET.id+'_';
+// New Game+ (įveikę žaidimą ir gavę GOAT) visada aukščiau už kitus; vienas vardas – viena eilutė
+const rkCmp=(a,b)=>(b.ng-a.ng)||b.lvl-a.lvl||b.xp-a.xp;
+function rkDedup(rows){const m={};for(const r of rows){const k=String(r.name).toLowerCase().trim();const o=m[k];if(!o||rkCmp(r,o)<0||(rkCmp(r,o)===0&&r.me))m[k]=r;else if(r.me&&rkCmp(r,o)===0)m[k]=r;}return Object.values(m);}
+const rkLvl=x=>x.ng?`<span style="color:#e8b8ff;font-weight:700">✦ New Game+</span> · ${tr('lygis','level')} <b>${x.lvl}</b>`:`<b>${x.lvl}</b>`;
+function rankRows(){save();const mine=SLOTS_DATA.filter(d=>d&&CLASSES[d.cls]).map(d=>({name:d.name,cls:d.cls,lvl:d.lvl,xp:d.xp,kills:statTotal(d.stats),elites:(d.stats&&d.stats.elites)||0,bosses:(d.stats&&d.stats.bosses)||0,deaths:(d.stats&&d.stats.deaths)||0,rating:(d.arena&&d.arena.rating)||1000,aw:(d.arena&&d.arena.w)||0,al:(d.arena&&d.arena.l)||0,ng:!!(d.ng&&d.goat),me:P&&d.name===P.name}));
+  if(!NET.on||!RK.data)return rkDedup(mine);const out=[],hide=n=>{const k=String(n).toLowerCase().trim();return LEG_HIDE[k]||LEG_R[k];};const myKey=NET.id+'_';
   for(const k in RK.data){const v=RK.data[k];if(!v||typeof v.n!=='string'||!CLASSES[v.c]||hide(v.n))continue;if(k.startsWith(myKey))continue;if(Date.now()-(+v.t||0)>45*86400000)continue;
-    out.push({name:v.n.replace(/</g,''),cls:v.c,lvl:v.l|0,xp:0,kills:v.k|0,elites:v.e|0,bosses:v.b|0,deaths:v.d|0,rating:1000,aw:0,al:0,me:false});}
-  return out.concat(mine);}
+    out.push({name:v.n.replace(/</g,''),cls:v.c,lvl:v.l|0,xp:0,kills:v.k|0,elites:v.e|0,bosses:v.b|0,deaths:v.d|0,rating:1000,aw:0,al:0,ng:v.g===1,me:false});}
+  return rkDedup(out.concat(mine));}
 function refreshRank(){const el=$i('panelRank');if(!P||el.classList.contains('hidden'))return;rkLoad();const rows=rankRows();
   const tab=(id,lt,en)=>`<button class="sbtn ${rankTab===id?'on':''}" data-rtab="${id}">${tr(lt,en)}</button>`;
   const medal=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
   const nm=r=>`<span style="color:${r.me?'#9cff9c':'#e9dfc8'}">${r.name}</span>`;
   let h=`<h2>🏆 ${tr('Reitingai','Rankings')} · ${tr('Aušra','Dawn')} x1 <button class="x" data-close="panelRank">×</button></h2><div class="rtabs">${tab('all','Aukščiausias lygis','Highest level')}${tab('cls','Pagal klasę','By class')}${tab('kills','Įveikti priešai','Enemies slain')}</div>`;
-  if(rankTab==='all'){const r=[...rows].sort((a,b)=>b.lvl-a.lvl||b.xp-a.xp);h+=`<table class="rt"><tr><th>#</th><th>${tr('Vardas','Name')}</th><th>${tr('Klasė','Class')}</th><th>${tr('Lygis','Level')}</th><th>${tr('Įveikta','Slain')}</th></tr>`+r.map((x,i)=>`<tr><td>${medal(i)}</td><td>${nm(x)}</td><td>${tx(CLASSES[x.cls].name)}</td><td><b>${x.lvl}</b></td><td>${x.kills}</td></tr>`).join('')+`</table>`;}
-  else if(rankTab==='cls'){for(const c of CLS_ALL){const r=rows.filter(x=>x.cls===c).sort((a,b)=>b.lvl-a.lvl||b.xp-a.xp);h+=`<div class="rhead">${{knight:'⚔️',wizard:'🔮',elf:'🏹',shaman:SHAMAN_ICO}[c]} ${tx(CLASSES[c].name)}</div>`;
-    h+=r.length?`<table class="rt">`+r.map((x,i)=>`<tr><td style="width:30px">${medal(i)}</td><td>${nm(x)}</td><td style="text-align:right">${tr('lygis','level')} <b>${x.lvl}</b></td></tr>`).join('')+`</table>`:`<div class="sub2">${tr('Dar nėra šios klasės veikėjų.','No characters of this class yet.')}</div>`;}}
+  if(rankTab==='all'){const r=[...rows].sort(rkCmp);h+=`<table class="rt"><tr><th>#</th><th>${tr('Vardas','Name')}</th><th>${tr('Klasė','Class')}</th><th>${tr('Lygis','Level')}</th><th>${tr('Įveikta','Slain')}</th></tr>`+r.map((x,i)=>`<tr><td>${medal(i)}</td><td>${nm(x)}</td><td>${tx(CLASSES[x.cls].name)}</td><td>${rkLvl(x)}</td><td>${x.kills}</td></tr>`).join('')+`</table>`;}
+  else if(rankTab==='cls'){for(const c of CLS_ALL){const r=rows.filter(x=>x.cls===c).sort(rkCmp);h+=`<div class="rhead">${{knight:'⚔️',wizard:'🔮',elf:'🏹',shaman:SHAMAN_ICO}[c]} ${tx(CLASSES[c].name)}</div>`;
+    h+=r.length?`<table class="rt">`+r.map((x,i)=>`<tr><td style="width:30px">${medal(i)}</td><td>${nm(x)}</td><td style="text-align:right">${x.ng?rkLvl(x):tr('lygis','level')+' <b>'+x.lvl+'</b>'}</td></tr>`).join('')+`</table>`:`<div class="sub2">${tr('Dar nėra šios klasės veikėjų.','No characters of this class yet.')}</div>`;}}
   else if(rankTab==='arena'){const r=[...rows].sort((a,b)=>b.rating-a.rating);h+=`<table class="rt"><tr><th>#</th><th>${tr('Vardas','Name')}</th><th>${tr('Reitingas','Rating')}</th><th>${tr('Titulas','Title')}</th><th>${tr('P / L','W / L')}</th></tr>`+r.map((x,i)=>`<tr><td>${medal(i)}</td><td>${nm(x)}</td><td><b>⚔️ ${x.rating}</b></td><td>${tx(arenaRank(x.rating))}</td><td>${x.aw} / ${x.al}</td></tr>`).join('')+`</table>`;}
   else{const r=[...rows].sort((a,b)=>b.kills-a.kills);h+=`<table class="rt"><tr><th>#</th><th>${tr('Vardas','Name')}</th><th>${tr('Iš viso','Total')}</th><th>${tr('Elitiniai','Elites')}</th><th>${tr('Bosai','Bosses')}</th><th>${tr('Mirtys','Deaths')}</th></tr>`+r.map((x,i)=>`<tr><td>${medal(i)}</td><td>${nm(x)}</td><td><b>${x.kills}</b></td><td style="color:#ffcf4a">${x.elites}</td><td style="color:#ff9a6a">${x.bosses}</td><td>${x.deaths}</td></tr>`).join('')+`</table>`;
     const k=(P.stats&&P.stats.kills)||{};const types=Object.keys(MT).filter(t=>k[t]);h+=`<div class="rhead">${P.name} – ${tr('įveikti priešai pagal rūšį','enemies slain by type')}</div>`;
