@@ -1363,6 +1363,8 @@ function newPlayer(name,cls){const c=CLASSES[cls];const p={name,cls,lvl:1,xp:0,p
   const w=makeItem('weapon',0,cls);w.starter=true;p.eq.weapon=w;return p;}
 function initRuntime(){ALLIES.length=0;Object.assign(P,{slowT:0,dotT:0,hotT:0,x:START.x,y:START.y,path:[],target:null,atkCd:0,potCd:0,face:1,walk:0,walking:false,atkAnim:0,dead:false,deadT:0,repathT:0,regenT:0,flash:0});
   if(!P.tal)P.tal={};if(P.tp==null)P.tp=0;try{for(const it of P.inv.concat(Object.values(P.eq)))addSock(it);}catch(e){}P.potHP2|=0;P.potMP2|=0;if(!P.qdone)P.qdone=[];if(!P.side)P.side={};if(P.mats){for(const k in P.mats)if(P.mats[k]>0)addMat(k,P.mats[k]);P.mats=null;}if(!P.skills)P.skills=[SKILLS[P.cls][0].id];if(P.rmb==null)P.rmb=0;P.cds={};P.buffs={};P.pendingSkill=null;rains.length=0;if(!P.letters)P.letters=[0,0,0,0,0,0,0,0];if(P.lround==null)P.lround=0;for(const k of JEWEL_SLOTS)if(P.eq[k]===undefined)P.eq[k]=null;letterRound=-1;S=stats();P.hp=Math.min(P.hp>1?P.hp:S.maxHp,S.maxHp);P.mp=Math.min(P.mp>1?P.mp:S.maxMp,S.maxMp);}
+const ZSETB={12:{spd:.02,dmg:.05},13:{spd:.03,dmg:.07},14:{spd:.04,dmg:.10}};
+function zSetBonus(eq){eq=eq||P.eq;let spd=0,n=0,lo=99;for(const k of ARMOR_SLOTS){const it=eq[k];const b=it&&ZSETB[it.tier];if(b){spd+=b.spd;n++;lo=Math.min(lo,it.tier);}}return{spd,dmg:n===5?ZSETB[lo].dmg:0,n,lo:n===5?lo:null};}
 function setTier(){let t=null;for(const k of ARMOR_SLOTS){const it=P.eq[k];if(!it)return null;if(t===null)t=it.tier;else if(t!==it.tier)return null;}return t;}
 // šarvai mažina žalą procentais: kuo stipresnis priešas, tuo mažiau padeda ta pati gynyba (max 70 %)
 function defMit(def,lvl){return Math.min(.7,def/(def+20+lvl*5));}
@@ -1373,10 +1375,10 @@ function stats(){const c=CLASSES[P.cls],T=talentSum();let w=0,def=0,crit=.05+T.c
   const st=setTier();if(st!==null)def=def*1.15;if(P.eq.amulet&&P.eq.amulet.unique==='devil')crit+=.08;
   let mn,mx;if(P.cls==='knight'){mn=STR/6;mx=STR/4;}else if(P.cls==='wizard'){mn=ENE/9;mx=ENE/4;}else if(P.cls==='shaman'){mn=ENE/11+VIT/16;mx=ENE/5+VIT/10;}else{mn=STR/14+AGI/7;mx=STR/8+AGI/4;}
   const bf=P.buffs||{},bd=(bf.dmg?bf.dmg.v:0)+(bf.ldmg?bf.ldmg.v:0)+(P.tattoo?.25:0),bdef=(bf.def?bf.def.v:0)+(bf.ldef?bf.ldef.v:0),bspd=(bf.lspd?bf.lspd.v:0)+((P.eq.ring1&&P.eq.ring1.unique==='baubas')||(P.eq.ring2&&P.eq.ring2.unique==='baubas')?.15:0);
-  mn=Math.floor((mn+w*.75)*(1+T.dmg+jDmg+bd));mx=Math.floor((mx+w)*(1+T.dmg+jDmg+bd));
+  const ZB=zSetBonus();mn=Math.floor((mn+w*.75)*(1+T.dmg+jDmg+bd+ZB.dmg));mx=Math.floor((mx+w)*(1+T.dmg+jDmg+bd+ZB.dmg));
   def=Math.round((def+Math.floor(AGI/(P.cls==='knight'?3:4)))*(1+T.def+bdef));
   return{B,mn,mx:Math.max(mx,mn+1),def,maxHp:Math.round((20+P.lvl*2+VIT*c.hpV)*(1+T.hp+jHp+(bf.lhp?bf.lhp.v:0))),maxMp:Math.round((10+P.lvl+ENE*c.mpE)*(1+T.mp+(bf.lmp?bf.lmp.v:0))),
-    atkCd:Math.max(.2,(.9-AGI*.003)/(1+T.atkSpd+bspd)),crit,critMul:1.5+T.critDmg,range:c.range+T.range,set:st,T,gems:GEMS};}
+    atkCd:Math.max(.2,(.9-AGI*.003)/(1+T.atkSpd+bspd+ZB.spd)),crit,critMul:1.5+T.critDmg,range:c.range+T.range,set:st,T,gems:GEMS,zb:ZB};}
 
 /* ================= IŠSAUGOJIMAS ================= */
 const SAVE_KEY='sz_ausra_x1_chars_v1',MAX_SLOTS=4;
@@ -5363,7 +5365,7 @@ function refreshChar(){if(!P||pChar.classList.contains('hidden'))return;const s=
   ${line('⚔️ '+tr('Žala','Damage'),s.mn+'–'+s.mx,w?tr('ginklas','weapon')+' +'+itemPower(w)+(w.plus?' ('+tr('iš jų pliusas','of which enchant')+' +'+(itemPower(w)-itemPower(Object.assign({},w,{plus:0})))+')':''):'')}
   ${line('🛡️ '+tr('Gynyba','Defense'),s.def,tr('šarvai','armor')+' +'+armDef+' · '+tr('sugeria','blocks')+' '+Math.round(defMit(s.def,P.lvl)*100)+'% '+tr('žalos','damage')+(s.set!==null?' · '+tx(TIERS[s.set].set)+' '+tr('komplektas','set')+' +15%':''))}
   ${line('❤️ '+tr('Gyvybė','Health'),s.maxHp)}${line('💧 '+tr('Mana','Mana'),s.maxMp)}
-  ${line('⚡ '+tr('Atakos greitis','Attack speed'),(1/s.atkCd).toFixed(2)+' '+tr('smūgio/s','hits/s'))}
+  ${line('⚡ '+tr('Atakos greitis','Attack speed'),(1/s.atkCd).toFixed(2)+' '+tr('smūgio/s','hits/s'),s.zb&&s.zb.spd?tr('Užmaršties šarvai','Oblivion armor')+' +'+Math.round(s.zb.spd*100)+'%':'')}${s.zb&&s.zb.dmg?line('✦ '+tr('Užmaršties rinkinys','Oblivion set'),'+'+Math.round(s.zb.dmg*100)+'% '+tr('žalos','damage')):''}
   ${line('🎯 '+tr('Kritinis smūgis','Critical hit'),Math.round(s.crit*100)+'%',tr('žala','damage')+' ×'+(+s.critMul.toFixed(2)))}
   </div>${ngInfo()}`;}
 function cellHTML(it){if(!it)return'';if(isScroll(it)&&(it.n||1)>1)return iconImg(it)+`<span class="pl" style="color:#e8d8b0">×${it.n}</span>`;if(it.kind==='mat')return iconImg(it)+`<span class="pl" style="color:#e8d8b0">×${it.n}</span>`;if(it.kind==='qitem')return iconImg(it)+`<span class="pl" style="color:#ffcf9a">×${it.n}</span>`;return iconImg(it)+(it.plus?`<span class="pl" style="color:${plusColor(it.plus)}">+${it.plus}</span>`:'');}
@@ -5398,6 +5400,7 @@ function itemTip(it,shop){if(it.kind==='xpscroll')return`<img src="${iconURL(it)
     if(w&&it.sock&&it.sock.length){h+=`<div style="margin-top:3px">${tr('Lizdai','Sockets')}: ${it.sock.map(g=>g?`<span style="color:${GEM_INFO[g].c};font-size:15px">●</span>`:'<span style="color:#888;font-size:15px">○</span>').join(' ')}</div>`;const cnt={};it.sock.forEach(g=>{if(g)cnt[g]=(cnt[g]||0)+1;});for(const g in cnt)h+=`<div style="color:${GEM_INFO[g].c}">${tx(GEM_INFO[g].n)}: ${GEM_INFO[g].d(cnt[g])}</div>`;if(it.sock.includes(null))h+=`<div class="sub2">${tr('Tuščius lizdus užpildykite ledo, ugnies ar žaibo akmenimis.','Fill empty sockets with ice, fire or lightning gems.')}</div>`;}
     if(it.crafted)h+=`<div style="color:#d8b07a">${tr('Meistro Jurgio darbas','Crafted by Jurgis')}</div>`;
     if(it.exc)h+=`<div style="color:#5dff7a">${tr('Puikus daiktas','Excellent item')}: ${w?tr('+20% žalos','+20% damage'):tr('+25% gynybos','+25% defense')}</div>`;
+    if(!w&&ZSETB[it.tier]){const b=ZSETB[it.tier],zb=zSetBonus();h+=`<div style="margin-top:4px;color:#6fffe8">✦ +${Math.round(b.spd*100)}% ${tr('atakos greičio','attack speed')}</div><div style="color:${zb.n===5?'#6fffe8':'#8a9a98'}">✦ ${tr('Visos 5 Užmaršties žemių šarvų dalys','All 5 Lands of Oblivion armor pieces')}: +${Math.round(b.dmg*100)}% ${tr('žalos','damage')} <span class="sub2">(${zb.n}/5)</span></div>`;}
     const max=w?MAXW:MAXA;if(it.plus<max)h+=`<div style="color:#c9a45c">${tr('Kito pliuso sėkmė','Next enchant chance')}: ${Math.round(enchantChance(it.plus)*100)}%</div>`;else h+=`<div style="color:#ffe066">${tr('Maksimalus lygis','Maximum level')}</div>`;
     const rq=reqLvl(it);h+=`<div style="color:${P.lvl>=rq?'#bbb':'#ff6b6b'}">${tr('Reikalingas lygis','Required level')}: ${rq}</div>`;
     if(w&&it.cls!==P.cls)h+=`<div class="danger">${tr('Tinka tik','Only for')}: ${tx(CLASSES[it.cls].name)}</div>`;}
