@@ -3909,7 +3909,7 @@ function render(){FRAME++,MON3_B=0;
     else if(e.c){const[cx,cy]=toScreen(e.c.x,e.c.y);if(cx>-40&&cx<W+40&&cy>-40&&cy<H+40){drawChest(e.c,cx,cy);if(!e.c.open)addLight(cx,cy-10,26,.25);}}
     else if(e.q)drawRemote(e.q);
     else if(e.p)drawPlayer(psx,psy);}
-  for(const[n,cx,cy]of sayQ)drawSay(n,cx,cy);sayQ.length=0;
+  for(const[n,cx,cy]of sayQ)drawSay(n,cx,cy);sayQ.length=0;if(P&&HPBAR&&!P.dead&&psx!=null)try{drawOwnBars(psx,psy);}catch(e){}
   drawProjectiles();drawEffects();if(curD)dunMotes();drawSigns();drawGateLabels();if(P&&P.trackQ&&GOAL)drawGoalArrow();if(P){drawLetters();drawFeatures();}
   ctx.save();ctx.globalCompositeOperation='lighter';for(const s of sparks){const[sx,sy]=toScreen(s.wx,s.wy);ctx.globalAlpha=s.life/s.max;if(s.soft){ctx.globalCompositeOperation='source-over';circ(sx+s.ox,sy+s.oy,2.6*(1.6-s.life/s.max),s.col);ctx.globalCompositeOperation='lighter';}else circ(sx+s.ox,sy+s.oy,1.8,s.col);}ctx.restore();
   drawAmbient();drawCritters();
@@ -5544,6 +5544,10 @@ $i('slotQ').onclick=()=>usePotion('hp');$i('slotW').onclick=()=>usePotion('mp');
 $i('bChar').onclick=()=>toggle(pChar);$i('bQLog').onclick=()=>toggleQL();$i('bAch').onclick=()=>{$i('panelAch').classList.toggle('hidden');refreshAch();};
 $i('panelAch').addEventListener('mousemove',e=>{const c=e.target.closest('[data-ach]');if(!c){hideTip();return;}const a=ACH.find(x=>x[0]===c.dataset.ach);const on=P.ach&&P.ach[a[0]];showTip(`<div style="font-weight:700;color:${on?'#ffd86a':'#aaa'}">${a[1]} ${tx(a[2])}</div><div>${tx(a[3])}</div><div class="sub2">${on?tr('Gautas ','Earned ')+new Date(on).toLocaleDateString():tr('Dar negautas','Not earned yet')}</div>`,e);});$i('panelAch').addEventListener('mouseleave',hideTip);$i('bRank').onclick=()=>{$i('panelRank').classList.toggle('hidden');refreshRank();};$i('bInv').onclick=()=>toggle(pInv);$i('bTal').onclick=()=>toggle(pTal);$i('bHelp').onclick=()=>$i('help').classList.toggle('hidden');
 $i('bLang').onclick=()=>setLang(LANG==='lt'?'en':'lt');
+let HPBAR=(()=>{try{return localStorage.getItem('sz_hpbar')==='1';}catch(e){return false;}})();
+function drawOwnBars(cx,cy){const mo=P.mounted?30:0,w=44,x=cx-w/2,y=cy-76-mo;ctx.save();
+  const bar=(yy,h,f,c1,c2)=>{ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillRect(x-1,yy-1,w+2,h+2);ctx.fillStyle='#2a1a12';ctx.fillRect(x,yy,w,h);const g=ctx.createLinearGradient(0,yy,0,yy+h);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(x,yy,Math.max(0,Math.min(1,f))*w,h);};
+  bar(y,4,P.hp/S.maxHp,'#ff6a6a','#b01a28');bar(y+5,3,P.mp/S.maxMp,'#7ab8ff','#1f4fb0');ctx.restore();}
 function renderSnd(){const el=$i('panelSnd');const sl=(k,lbl)=>`<div class="row"><span>${lbl}</span><input type="range" min="0" max="100" value="${Math.round(VOL[k]*100)}" data-vol="${k}"><b style="width:38px;text-align:right">${Math.round(VOL[k]*100)}%</b></div>`;
   const on=(c,t,a)=>`<button class="sbtn${c?' on':''}" ${a}>${t}</button>`;
   const br=BRIGHT_LV.map((v,i)=>on(Math.abs(v-BRIGHT)<.01,i===0?'0':'+'+Math.round((v-1)*100),`data-br="${i}" title="${i===0?tr('Įprastas','Normal'):'+'+Math.round((v-1)*100)+'%'}"`)).join('');
@@ -5554,6 +5558,7 @@ function renderSnd(){const el=$i('panelSnd');const sl=(k,lbl)=>`<div class="row"
   ${sl('mus',tr('Muzika','Music'))}${sl('sfx',tr('Efektai','Effects'))}${sl('voice',tr('Balsai','Voices'))}
   <h3>🖥️ ${tr('Vaizdas','Display')}</h3>
   <div class="row"><span>☀️ ${tr('Ryškumas','Brightness')}</span><div class="opts">${br}</div></div>
+  <div class="row"><span>❤️ ${tr('Juostos virš veikėjo','Bars above hero')}</span><div class="opts">${on(!HPBAR,tr('Išjungta','Off'),'data-hpb="0"')}${on(HPBAR,tr('Įjungta','On'),'data-hpb="1"')}</div></div>
   <div class="row"><span>🎨 ${tr('Grafika','Graphics')}</span><div class="opts">${on(GFX_HI&&!GFX_MID,tr('Graži','Pretty'),'data-gfx="1"')}${on(GFX_MID,tr('Graži, lengva','Pretty, light'),'data-gfx="2"')}${on(!GFX_HI,tr('Greita','Fast'),'data-gfx="0"')}</div></div>
   ${TOUCH?`<div class="row" style="flex-wrap:wrap"><span>🎮 ${tr('Įgūdžių mygtukai','Skill buttons')}</span>${tLayHTML()}</div>`:''}
   <div class="row"><span>⛶ ${tr('Visas ekranas','Fullscreen')}</span><div class="opts">${on(fs,fs?tr('Išjungti','Exit'):tr('Įjungti','Enter'),'data-fs="1"')}</div></div>
@@ -5567,6 +5572,7 @@ function renderSnd(){const el=$i('panelSnd');const sl=(k,lbl)=>`<div class="row"
 $i('panelSnd').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;let re=false;
   if(b.dataset.br!==undefined){BRIGHT=BRIGHT_LV[+b.dataset.br];try{localStorage.setItem('sz_bright',String(BRIGHT));}catch(x){}applyBright();re=true;}
   else if(b.dataset.gfx!==undefined){setGfx(b.dataset.gfx);re=true;}
+  else if(b.dataset.hpb!==undefined){HPBAR=b.dataset.hpb==='1';try{localStorage.setItem('sz_hpbar',HPBAR?'1':'0');}catch(x){}re=true;}
   else if(b.dataset.fs){toggleFs();setTimeout(()=>{if(!$i('panelSnd').classList.contains('hidden'))renderSnd();},500);}
   else if(b.dataset.lg){if(LANG!==b.dataset.lg)setLang(b.dataset.lg);re=true;}
   else if(b.dataset.xfer){$i('panelSnd').classList.add('hidden');try{save();}catch(x){}xferOpen(true);return;}
