@@ -4535,6 +4535,8 @@ document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.targ
   P.gold-=c.gold;takeMat(c.mat,c.n);if(c.ess)takeMat('essence',c.ess);if(!P.skUp)P.skUp={};if(!P.skUp[sk.id])P.skUp[sk.id]={};P.skUp[sk.id][k]=lv+1;sfx('enchant_ok');effects.push({type:'enchant',x:P.x,y:P.y,t:0,dur:1.1,col:'#8ad0ff'});
   const st=SKUP_ST.find(x=>x[0]===k);banner(sk.ico+' '+tx(sk.name),tx(st[2])+' '+'★'.repeat(lv+1),'#8ad0ff');S=stats();renderSkillBar();refreshInv&&refreshInv();save();openSkillMaster(shopOpen);});
 function nearestMon(x,y,r){let best=null,bd=r;for(const m of monsters.concat(pvpList())){if(m.dead)continue;const d=dist(m.x,m.y,x,y);if(d<bd){bd=d;best=m;}}return best;}
+// įgūdis pirmiausia muša tą priešą, kurį jau puolame – kad taikinys nešokinėtų
+function skFocus(rg){const t=P.target;if(!t||t.kind!=='mon'||!t.m||t.m.dead)return null;return dist(t.m.x,t.m.y,P.x,P.y)<=rg+2.5?t.m:null;}
 function castSkill(i,wx,wy,forced){if(!P||P.dead)return;if(wetBlock())return;const sk=SKILLS[P.cls][i]?skE(SKILLS[P.cls][i]):null;if(!sk)return;
   if(!knows(sk.id)){floatText(P.x,P.y,tr('Neišmoktas įgūdis','Skill not learned'),'#ccc',13);log(tr('Šio įgūdžio išmokite pas mokytoją Algirdą kaimelyje.','Learn this skill from Algirdas the Trainer in the village.'),'#aaa');return;}
   if(P.lvl<sk.lvl){floatText(P.x,P.y,tr(`Reikia ${sk.lvl} lygio`,`Requires level ${sk.lvl}`),'#ccc',13);return;}
@@ -4544,18 +4546,18 @@ function castSkill(i,wx,wy,forced){if(!P||P.dead)return;if(wetBlock())return;con
   const faceTo=(x,y)=>{P.face=((x-y)-(P.x-P.y))>=0?1:-1;};const _e0=effects.length,_p0=projectiles.length;
   switch(sk.type){
     case'aoeSelf':{const R=sk.r+S.T.aoe;effects.push({type:sk.fx||'spin',x:P.x,y:P.y,t:0,dur:sk.fx?.6:.45,r:R});monsters.concat(pvpList()).forEach(m=>{if(!m.dead&&dist(m.x,m.y,P.x,P.y)<R){hitMonster(m,rollDmg(sk.mul,true));if(sk.slow)m.slowT=sk.slow;}});break;}
-    case'aoeAt':{let tx_=wx,ty_=wy;if(hover&&hover.mon){tx_=hover.mon.x;ty_=hover.mon.y;}const d=dist(tx_,ty_,P.x,P.y),mr=6+S.T.range;if(d>mr){tx_=P.x+(tx_-P.x)/d*mr;ty_=P.y+(ty_-P.y)/d*mr;}
+    case'aoeAt':{let tx_=wx,ty_=wy;if(forced){tx_=forced.x;ty_=forced.y;}else if(hover&&hover.mon){tx_=hover.mon.x;ty_=hover.mon.y;}const d=dist(tx_,ty_,P.x,P.y),mr=6+S.T.range;if(d>mr){tx_=P.x+(tx_-P.x)/d*mr;ty_=P.y+(ty_-P.y)/d*mr;}
       const R=sk.r+S.T.aoe;effects.push({type:'storm',x:tx_,y:ty_,t:0,dur:.6,seed:rnd(),r:R});faceTo(tx_,ty_);monsters.concat(pvpList()).forEach(m=>{if(!m.dead&&dist(m.x,m.y,tx_,ty_)<R)hitMonster(m,rollDmg(sk.mul,true));});break;}
     case'multi':{const list=monsters.concat(pvpList()).filter(m=>!m.dead&&dist(m.x,m.y,P.x,P.y)<7.5+S.T.range).sort((a,b)=>dist(a.x,a.y,wx,wy)-dist(b.x,b.y,wx,wy)).slice(0,sk.n+S.T.extraArrow);
       if(!list.length){floatText(P.x,P.y,tr('Nėra taikinių','No targets'),'#ccc',13);return;}list.forEach(m=>projectiles.push({x:P.x,y:P.y,m,spd:16,kind:'arrow',dmg:rollDmg(sk.mul,true),a:0}));break;}
-    case'single':{const m=forced||(hover&&hover.mon)||(P.target&&P.target.kind==='mon'&&!P.target.m.dead?P.target.m:null)||nearestMon(wx,wy,3);
+    case'single':{const m=forced||skFocus(sk.range+(P.cls==='knight'?0:S.T.range))||(hover&&hover.mon)||nearestMon(wx,wy,3);
       if(!m){floatText(P.x,P.y,tr('Nėra taikinio','No target'),'#ccc',13);return;}
       const rg=sk.range+(P.cls==='knight'?0:S.T.range);if(dist(m.x,m.y,P.x,P.y)>rg||!losClear(P.x,P.y,m.x,m.y)){P.target={kind:'mon',m};P.pendingSkill={i,range:rg};P.repathT=0;return;}
       faceTo(m.x,m.y);if(sk.proj)projectiles.push({x:P.x,y:P.y,m,spd:sk.proj==='fire'?12:20,kind:sk.proj,big:true,dmg:rollDmg(sk.mul,true),a:0});
       else{hitMonster(m,rollDmg(sk.mul,true));effects.push({type:'smash',x:m.x,y:m.y,t:0,dur:.4});}break;}
     case'buff':P.buffs[sk.buff]={t:sk.dur,v:sk.v,max:sk.dur,ico:sk.ico};effects.push({type:'buff',x:P.x,y:P.y,t:0,dur:.9,col:sk.col});floatText(P.x,P.y,tx(sk.name),sk.col,14);break;
     case'heal':{const hv=Math.round(S.maxHp*sk.v);P.hp=Math.min(S.maxHp,P.hp+hv);if(sk.hot){P.hotT=5;P.hotV=sk.hot/5;}P.slowT=0;P.dotT=0;effects.push({type:'buff',x:P.x,y:P.y,t:0,dur:.9,col:'#5dff7a'});floatText(P.x,P.y,'+'+hv,'#5dff7a',16);break;}
-    case'chain':{const m0=forced||(hover&&hover.mon)||(P.target&&P.target.kind==='mon'&&!P.target.m.dead?P.target.m:null)||nearestMon(wx,wy,3);
+    case'chain':{const m0=forced||skFocus(sk.range+S.T.range)||(hover&&hover.mon)||nearestMon(wx,wy,3);
       if(!m0){floatText(P.x,P.y,tr('Nėra taikinio','No target'),'#ccc',13);return;}
       const rg=sk.range+S.T.range;if(dist(m0.x,m0.y,P.x,P.y)>rg||!losClear(P.x,P.y,m0.x,m0.y)){P.target={kind:'mon',m:m0};P.pendingSkill={i,range:rg};P.repathT=0;return;}
       faceTo(m0.x,m0.y);const hit=[m0],pts=[[P.x,P.y],[m0.x,m0.y]];let cur=m0;const all=monsters.concat(pvpList());
@@ -6278,7 +6280,7 @@ cv.addEventListener('pointerup',touchUp);cv.addEventListener('pointercancel',tou
 // įgūdis į artimiausią priešą
 function castAuto(i){if(!P||P.dead)return;let m=P.target&&P.target.kind==='mon'&&!P.target.m.dead?P.target.m:null;
   if(!m){let bd=9;for(const o of monsters){if(o.dead)continue;const d=dist(o.x,o.y,P.x,P.y);if(d<bd){bd=d;m=o;}}}
-  if(m){P.target={kind:'mon',m};castSkill(i,m.x,m.y);}else castSkill(i,P.x+(P.face||1)*1.2,P.y-(P.face||1)*1.2);}
+  if(m){P.target={kind:'mon',m};castSkill(i,m.x,m.y,m);}else castSkill(i,P.x+(P.face||1)*1.2,P.y-(P.face||1)*1.2);}
 
 // telefono įgūdžių mygtukai (dešinėje, prie nykščio)
 const TPAD_POS=[[146,118],[128,46],[64,8],[4,40]];
