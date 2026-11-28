@@ -1421,7 +1421,9 @@ function loadSlots(){GIFT_Q.length=0;let arr=new Array(MAX_SLOTS).fill(null);try
   for(let i=0;i<arr.length;i++){const d=arr[i];if(!d||GIFT_Q.some(q=>q[0]===i))continue;const good=(d._s?d._s===slotSig(d):true)&&slotOk(d);if(!good){const nm=String(d.name||'?').slice(0,16);if(!BAD_SLOTS.includes(nm))BAD_SLOTS.push(nm);try{localStorage.setItem('sz_bad_'+Date.now()+'_'+i,JSON.stringify(d));}catch(e){}arr[i]=null;}}
   return arr;}
 let SLOTS_DATA=loadSlots();
-function writeSlots(){try{for(const d of SLOTS_DATA)if(d)d._s=slotSig(d);localStorage.setItem(SAVE_KEY,JSON.stringify(SLOTS_DATA));}catch(e){}}
+function writeSlots(){try{for(const d of SLOTS_DATA)if(d)d._s=slotSig(d);const j=JSON.stringify(SLOTS_DATA);localStorage.setItem(SAVE_KEY,j);SZ_STOK=(localStorage.getItem(SAVE_KEY)===j);}catch(e){SZ_STOK=false;}if(SZ_STOK===false)sz_warnNoSave();}
+function sz_testStorage(){try{const k='__sz_t'+Date.now();localStorage.setItem(k,'1');const ok=localStorage.getItem(k)==='1';localStorage.removeItem(k);return ok;}catch(e){return false;}}
+let SZ_STOK=null;
 function save(){if(!P||P.slot==null)return;const d={};for(const k of['ngB','goatK','ngSeen2','gift24','dly','wk','helpDay','helpN','helpPot','supQ','boarM','onBoar','goat','gtPost','gdPost','peakLvl','znSeen','potHP2','potMP2','skUp','axe','bookK','supc','supN','statues','statueDone','tmapId','intro','name','cls','lvl','xp','pts','tp','tal','quest','qdone','letters','lround','mats','side','skills','rmb','stats','dausos','ach','arena','gq','bank','str','agi','vit','ene','hp','mp','gold','potHP','potMP','inv','eq','gift1','giftMsg','gift2','giftMsg2','mk','ek','legend','lgPost','superLegend','slPost','anSeen','lgPost2','slPost2','rs','renamed1','horse','mounted','tattoo','kiss1','gift3','giftMsg3','gift4','giftMsg4','gift5','giftMsg5','uniMsg','mbag','godBack','lvset','lvsetMsg','books','ng','god','godFix','ngRuns','ngSeen'])d[k]=P[k];d.itemId=ITEMID;if(!P.dead&&!DUEL&&!inArena(P.x,P.y)&&walkable(P.x,P.y)){d.px=Math.round(P.x*100)/100;d.py=Math.round(P.y*100)/100;}else{d.px=null;d.py=null;}if(!slotOk(d)){P.cheat=true;return;}SLOTS_DATA[P.slot]=d;writeSlots();}
 setInterval(save,15000);setInterval(()=>{try{if(P&&invNorm())refreshInv();}catch(e){}},1000);setInterval(()=>{if(P&&!document.hidden)try{refreshQuest();}catch(e){}},60000);setInterval(()=>{try{if(P)partyChatFit();}catch(e){}},700);setInterval(()=>{try{if(P&&P.legend)netPostLegend();}catch(e){}},60000);setInterval(()=>{try{const el=$i('mode');if(NET.on&&P){el.textContent='🌐 '+tr('Prisijungę: ','Online: ')+NET.online;el.style.color='#9cff9c';}}catch(e){}},1000);setInterval(()=>{try{if(P&&typeof EVENT!=='undefined'&&EVENT.m&&!EVENT.m.dead)refreshQuest();}catch(e){}},1000);addEventListener('beforeunload',save);
 
@@ -5752,6 +5754,14 @@ function renderHome(){const i=lastSlot(),d=i>=0?SLOTS_DATA[i]:null,b=$i('hCont')
   $i('hSwitch').classList.toggle('hidden',n<2);$i('hSwitch').textContent=tr('Pasirinkti kitą veikėją','Choose another character');
   $i('hNew').textContent=d?tr('Kurti naują veikėją','Create a new character'):tr('Pradėti nuotykį','Start the adventure');
   $i('hSet').textContent=tr('Nustatymai','Settings');$i('hInfo').textContent=tr('Informacija','Information');$i('qBack').textContent='← '+tr('Atgal','Back');}
+let sz_warned=false;
+function sz_warnNoSave(){if(sz_warned)return;sz_warned=true;try{
+  const h=`<div style="text-align:left;line-height:1.5">${tr(
+    'Tavo naršyklė <b>neleidžia žaidimui išsaugoti progreso</b> šiame įrenginyje – pažanga dings uždarius ar perkrovus puslapį.<br><br>Tai dažniausiai nutinka su <b>Brave</b> naršykle (Shields apsauga) arba privačiu/inkognito langu. Pabandyk:<br>1. Paspausk <b>liūto ženkliuką 🦁</b> adreso juostoje ir nustatyk Shields šiai svetainei į <b>žemesnį (Standard)</b> arba išjunk.<br>2. Patikrink ar nesi <b>privačiame/inkognito</b> lange.<br>3. Jei žaidi per itch.io, pabandyk atidaryti žaidimą <b>per pilną ekraną/naujame skirtuke</b>, ne tik įterptą langelį.<br><br>Pataisius – perkrauk puslapį ir žaisk iš naujo, progresas pradės saugotis.',
+    'Your browser is <b>blocking the game from saving progress</b> on this device – progress will be lost when you close or reload the page.<br><br>This usually happens with <b>Brave</b> (Shields) or a private/incognito window. Try:<br>1. Click the <b>lion icon 🦁</b> in the address bar and set Shields for this site to <b>Standard</b> or turn it off.<br>2. Check you are not in a <b>private/incognito</b> window.<br>3. If playing via itch.io, try opening the game in <b>fullscreen/a new tab</b> instead of just the embedded box.<br><br>After fixing this, reload the page and play again – progress will start saving.'
+  )}</div>`;
+  askConfirm('⚠️ '+tr('Progresas neišsisaugo!','Progress is not saving!'),h,tr('Supratau','Got it'),()=>{});try{$i('cfNo').style.display='none';}catch(e){}
+}catch(e){}}
 function openHomeInfo(){const h=`<div style="text-align:left;line-height:1.45">${tr('<b>Velnio Akmuo</b> – senosios mokyklos izometrinis internetinis RPG, įkvėptas lietuvių mitologijos. Pradedi skarmalais mažame kaime, renkiesi riterį, burtininką, elfą ar šamaną ir kovoji per miškus, požemius ir mirusiųjų karalystę iki paties Velnio – kartu su kitais žaidėjais.','<b>Devil\'s Stone</b> is an old-school isometric online RPG inspired by Lithuanian mythology. You start in rags in a small village, choose a Knight, Wizard, Elf or Shaman and fight your way through forests, dungeons and the realm of the dead to face the Devil himself – together with other players.')}
   <h3 style="margin:12px 0 6px;color:var(--gold2)">${tr('Valdymas','Controls')}</h3><div class="controls kc" style="position:static;margin:0">${$i('ctrlHint').innerHTML}</div>
   <div style="margin-top:12px;font-size:13px;opacity:.8">${$i('credit').innerHTML||''}</div></div>`;
@@ -5760,7 +5770,7 @@ function openHomeSettings(){try{renderSnd();const el=$i('panelSnd');el.classList
 $i('hCont').onclick=()=>{const i=lastSlot();if(i<0)return;selSlot=i;playSlot();};
 $i('hSwitch').onclick=()=>{SLOTS_DATA=loadSlots();selSlot=SLOTS_DATA.findIndex(Boolean);showScreen('scrChars');renderSlots();};
 $i('hNew').onclick=()=>showScreen('scrQuick');$i('hSet').onclick=openHomeSettings;$i('hInfo').onclick=openHomeInfo;
-setTimeout(()=>{try{$i('qBack').onclick=()=>showScreen('scrHome');if(!P&&!$i('scrHome').classList.contains('hidden'))showScreen('scrHome');}catch(e){}},0);
+setTimeout(()=>{try{$i('qBack').onclick=()=>showScreen('scrHome');if(!P&&!$i('scrHome').classList.contains('hidden'))showScreen('scrHome');SZ_STOK=sz_testStorage();if(!SZ_STOK)sz_warnNoSave();}catch(e){}},0);
 /* menu cat – Bruise strolls along the bottom */
 const HCAT={x:-80,dir:1,t:0,sit:0,last:0};
 /* big hero on the left of the menu: geared when continuing, in rags when creating */
